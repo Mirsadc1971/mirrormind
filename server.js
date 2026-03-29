@@ -257,8 +257,38 @@ app.get('/api/decisions/:sessionId', (req, res) => {
   res.json({ decisions: list });
 });
 
+// ─── LTD Launch Mechanics ────────────────────────────────────────────────────
+
+// In-memory waitlist + spot counter (replace with DB in production)
+const waitlist = [];
+let spotsRemaining = 500;
+const LAUNCH_DATE = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000); // 5 days from server start
+
+// Waitlist signup
+app.post('/api/waitlist', (req, res) => {
+  const { email, name } = req.body;
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email required' });
+  if (waitlist.find(e => e.email === email)) return res.json({ status: 'already_signed_up', position: waitlist.findIndex(e => e.email === email) + 1 });
+  waitlist.push({ email, name: name || '', signedAt: Date.now() });
+  console.log(`[Waitlist] New signup: ${email} — total: ${waitlist.length}`);
+  res.json({ status: 'success', position: waitlist.length, spotsRemaining });
+});
+
+// Get launch status (spots, countdown)
+app.get('/api/launch-status', (req, res) => {
+  const msRemaining = Math.max(0, LAUNCH_DATE.getTime() - Date.now());
+  res.json({
+    spotsRemaining,
+    spotsTotal: 500,
+    waitlistCount: waitlist.length,
+    launchDate: LAUNCH_DATE.toISOString(),
+    msRemaining,
+    isLive: msRemaining === 0,
+  });
+});
+
 // Serve the frontend for all other routes
-app.get('/{*path}', (req, res) => {
+app.get('/*path', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
