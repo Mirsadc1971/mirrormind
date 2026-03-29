@@ -31,3 +31,12 @@
 - [ ] AppSumo submission checklist
 - [ ] Twitter/X launch thread template
 - [ ] Reddit posts (r/SaaS, r/Entrepreneur, r/yoga, r/selfimprovement)
+
+## Supabase Persistence (mlsuttoccqcpjhvkfeuv)
+- [ ] Wire server.js to MirrorMind Supabase project
+- [ ] Persist waitlist email signups to mm_waitlist
+- [ ] Persist user sessions and answers to mm_sessions
+- [ ] Persist generated Mirror Reports to mm_reports
+- [ ] Persist decisions to mm_decisions
+- [ ] Persist friend survey tokens to mm_friend_surveys
+- [ ] Add 30-minute auto-sync GitHub Action
