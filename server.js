@@ -77,6 +77,43 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ─── Rate Limiting (in-memory, per-IP) ──────────────────────────────────────
+const rateLimitStore = new Map(); // ip → { count, resetAt }
+const RATE_LIMITS = {
+  '/api/auth/magic-link': { max: 5, windowMs: 60 * 60 * 1000 }, // 5 per hour
+  '/api/intake': { max: 10, windowMs: 60 * 60 * 1000 },          // 10 per hour
+  '/api/checkin': { max: 20, windowMs: 60 * 60 * 1000 },          // 20 per hour
+  '/api/generate-report': { max: 10, windowMs: 60 * 60 * 1000 },  // 10 per hour
+  '/api/twin/chat': { max: 60, windowMs: 60 * 60 * 1000 },        // 60 per hour
+};
+
+function rateLimit(req, res, next) {
+  const config = RATE_LIMITS[req.path];
+  if (!config) return next();
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+  const key = `${ip}:${req.path}`;
+  const now = Date.now();
+  let entry = rateLimitStore.get(key);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + config.windowMs };
+    rateLimitStore.set(key, entry);
+  }
+  entry.count++;
+  if (entry.count > config.max) {
+    return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+  }
+  next();
+}
+app.use(rateLimit);
+
+// Clean up rate limit store every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitStore) {
+    if (now > entry.resetAt) rateLimitStore.delete(key);
+  }
+}, 10 * 60 * 1000);
+
 // ─── In-memory store (fast cache; Supabase is the persistent source of truth) ─
 const profiles = new Map();   // sessionId → { answers, profile, report }
 const decisions = new Map();  // sessionId → [{ question, prediction, actual, timestamp }]
@@ -86,14 +123,35 @@ const LLM_URL = process.env.BUILT_IN_FORGE_API_URL || 'https://api.manus.im/v1';
 const LLM_KEY = process.env.BUILT_IN_FORGE_API_KEY || '';
 
 async function callLLM(messages, opts = {}) {
-  const res = await fetch(`${LLM_URL}/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${LLM_KEY}` },
-    body: JSON.stringify({ model: 'claude-sonnet-4-5', messages, max_tokens: opts.maxTokens || 2000, ...opts }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error?.message || 'LLM error');
-  return data.choices[0].message.content;
+  const maxRetries = opts.retries || 2;
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(`${LLM_URL}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${LLM_KEY}` },
+        body: JSON.stringify({ model: 'claude-sonnet-4-5', messages, max_tokens: opts.maxTokens || 2000, ...opts }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        lastError = new Error(data?.error?.message || `LLM error (HTTP ${res.status})`);
+        if (res.status === 429 || res.status >= 500) {
+          // Retryable — wait with exponential backoff
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+          continue;
+        }
+        throw lastError; // Non-retryable error
+      }
+      return data.choices[0].message.content;
+    } catch (e) {
+      lastError = e;
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        continue;
+      }
+    }
+  }
+  throw lastError || new Error('LLM call failed after retries');
 }
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
@@ -1659,6 +1717,21 @@ app.post('/api/account/cancel', async (req, res) => {
 // Serve the frontend for all other routes
 app.get('/*path', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ─── Global error handler ────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('[Global Error]', err.message, err.stack?.split('\n')[1]);
+  res.status(err.status || 500).json({
+    error: process.env.NODE_ENV === 'production'
+      ? 'Something went wrong. Please try again.'
+      : err.message,
+  });
+});
+
+// ─── 404 handler for API routes ─────────────────────────────────────────────
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
 });
 
 const PORT = process.env.PORT || 4000;

@@ -1678,6 +1678,20 @@ footer{
 
 <script>
 // ─────────────────────────────────────────────────────────────
+// TOAST NOTIFICATION SYSTEM
+// ─────────────────────────────────────────────────────────────
+function showToast(msg, type = 'error') {
+  const existing = document.querySelectorAll('.mm-toast');
+  existing.forEach(t => t.remove());
+  const toast = document.createElement('div');
+  toast.className = 'mm-toast mm-toast-' + type;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
+}
+
+// ─────────────────────────────────────────────────────────────
 // PARTICLES
 // ─────────────────────────────────────────────────────────────
 (function(){
@@ -2602,6 +2616,96 @@ async function startVoiceRecordingIntake(btnEl) {
 .y2-locked h3 { color:#94a3b8;font-size:18px;margin:0 0 8px; }
 .y2-locked p { color:#64748b;font-size:14px;margin:0 0 20px; }
 @media (max-width:600px) { .y2-quarters { grid-template-columns:1fr; } }
+/* ── PROGRESS VISUALIZATION ── */
+.progress-ring-wrap { display:flex;align-items:center;gap:24px;margin:20px 0;padding:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px; }
+.progress-ring { position:relative;width:100px;height:100px;flex-shrink:0; }
+.progress-ring svg { transform:rotate(-90deg); }
+.progress-ring-bg { fill:none;stroke:rgba(255,255,255,0.08);stroke-width:8; }
+.progress-ring-fill { fill:none;stroke:#a78bfa;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 0.6s ease; }
+.progress-ring-text { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center; }
+.progress-ring-pct { color:#c084fc;font-size:22px;font-weight:700;display:block;line-height:1; }
+.progress-ring-label { color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.08em; }
+.progress-stats { display:flex;flex-direction:column;gap:12px;flex:1; }
+.progress-stat { display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05); }
+.progress-stat:last-child { border-bottom:none; }
+.stat-label { color:#94a3b8;font-size:13px; }
+.stat-value { color:#e2e8f0;font-size:15px;font-weight:600; }
+.stat-value.streak { color:#fbbf24; }
+.stat-value.checkins { color:#a78bfa; }
+.stat-value.checkpoints { color:#4ade80; }
+/* Check-in history */
+.checkin-history { margin:24px 0; }
+.checkin-history h3 { color:#94a3b8;font-size:14px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 12px; }
+.checkin-history-list { display:flex;flex-direction:column;gap:8px; }
+.checkin-history-item { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color 0.2s; }
+.checkin-history-item:hover { border-color:rgba(192,132,252,0.3); }
+.chi-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:4px; }
+.chi-week { color:#a78bfa;font-size:13px;font-weight:600; }
+.chi-date { color:#64748b;font-size:12px; }
+.chi-preview { color:#94a3b8;font-size:13px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.chi-expanded { white-space:normal; }
+.chi-twin { color:#c084fc;font-size:13px;line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);display:none; }
+.checkin-history-item.expanded .chi-twin { display:block; }
+.checkin-history-item.expanded .chi-preview { white-space:normal; }
+.checkin-empty { text-align:center;padding:32px;color:#64748b;font-size:14px; }
+@media (max-width:600px) { .progress-ring-wrap { flex-direction:column;text-align:center; } .progress-stats { width:100%; } }
+
+/* ── COMPREHENSIVE MOBILE RESPONSIVENESS ── */
+@media (max-width:768px) {
+  nav { padding:12px 16px; }
+  .nav-logo { font-size:18px; }
+  .nav-cta { padding:7px 14px;font-size:13px; }
+  .nav-right { gap:8px; }
+  .hero-section { padding:60px 16px 40px; }
+  .hero-section h1 { font-size:32px; }
+}
+@media (max-width:480px) {
+  /* Plan screen nav buttons */
+  #screen-plan nav > div { gap:6px; }
+  #screen-plan nav button,
+  #screen-year2 nav button,
+  #screen-year2 nav .nav-cta { padding:6px 10px;font-size:12px; }
+  /* Plan screen content */
+  #screen-plan > div:last-child,
+  #screen-account > div:last-child,
+  #screen-year2 > div:last-child { padding:24px 12px; }
+  .plan-week-badge { font-size:12px;padding:4px 12px; }
+  .habit-card { padding:16px; }
+  .habit-card h3 { font-size:16px; }
+  .habit-card p { font-size:13px; }
+  .checkin-form { padding:16px; }
+  .checkin-q textarea { min-height:50px;font-size:13px;padding:10px; }
+  /* Account page */
+  .account-section { padding:16px; }
+  .account-row { flex-direction:column;align-items:flex-start;gap:4px; }
+  .account-label { font-size:12px; }
+  .account-value { font-size:13px; }
+  /* Year 2 page */
+  .y2-hero h2 { font-size:22px; }
+  .y2-distance { padding:20px 16px; }
+  .y2-distance p { font-size:14px;padding-left:16px; }
+  .y2-distance .y2-distance-label { padding-left:16px; }
+  .y2-profile { padding:16px; }
+  .y2-q-card { padding:14px; }
+  .y2-week1 { padding:16px; }
+  .y2-commitment { padding:16px; }
+  .y2-commitment p { font-size:14px; }
+  /* Progress visualization */
+  .progress-ring-wrap { padding:14px;gap:16px; }
+  .stat-label { font-size:12px; }
+  .stat-value { font-size:13px; }
+  /* Check-in history */
+  .checkin-history-item { padding:10px 12px; }
+  .chi-week { font-size:12px; }
+  .chi-preview { font-size:12px; }
+  .chi-twin { font-size:12px; }
+}
+/* ── TOAST NOTIFICATIONS ── */
+.mm-toast { position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;opacity:0;transition:all 0.3s ease;pointer-events:none;max-width:90%;text-align:center; }
+.mm-toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
+.mm-toast-error { background:rgba(239,68,68,0.9);color:#fff;border:1px solid rgba(239,68,68,0.5); }
+.mm-toast-success { background:rgba(34,197,94,0.9);color:#fff;border:1px solid rgba(34,197,94,0.5); }
+.mm-toast-info { background:rgba(124,58,237,0.9);color:#fff;border:1px solid rgba(124,58,237,0.5); }
 </style>
 
 <!-- GROWTH PLAN DASHBOARD SCREEN -->
@@ -2622,6 +2726,25 @@ async function startVoiceRecordingIntake(btnEl) {
       <div class="plan-quarter-segment" id="q-seg-3"></div>
       <div class="plan-quarter-segment" id="q-seg-4"></div>
     </div>
+    <!-- Progress Visualization -->
+    <div class="progress-ring-wrap" id="plan-progress">
+      <div class="progress-ring">
+        <svg viewBox="0 0 100 100" width="100" height="100">
+          <circle class="progress-ring-bg" cx="50" cy="50" r="42"></circle>
+          <circle class="progress-ring-fill" id="progress-ring-circle" cx="50" cy="50" r="42" stroke-dasharray="263.89" stroke-dashoffset="263.89"></circle>
+        </svg>
+        <div class="progress-ring-text">
+          <span class="progress-ring-pct" id="progress-pct">0%</span>
+          <span class="progress-ring-label">Complete</span>
+        </div>
+      </div>
+      <div class="progress-stats">
+        <div class="progress-stat"><span class="stat-label">🔥 Current Streak</span><span class="stat-value streak" id="stat-streak">0 weeks</span></div>
+        <div class="progress-stat"><span class="stat-label">✅ Check-Ins Done</span><span class="stat-value checkins" id="stat-checkins">0 / 52</span></div>
+        <div class="progress-stat"><span class="stat-label">🎯 Checkpoints Passed</span><span class="stat-value checkpoints" id="stat-checkpoints">0 / 4</span></div>
+        <div class="progress-stat"><span class="stat-label">📅 Next Check-In</span><span class="stat-value" id="stat-next">This week</span></div>
+      </div>
+    </div>
     <div id="plan-checkpoint-notice"></div>
     <div id="plan-habit-card" class="habit-card">
       <h3 id="plan-habit-title">Loading your habit...</h3>
@@ -2637,6 +2760,13 @@ async function startVoiceRecordingIntake(btnEl) {
     <div id="checkin-twin-response" style="display:none;background:rgba(124,58,237,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:24px;margin:16px 0">
       <div style="color:#a78bfa;font-size:13px;margin-bottom:8px">Your Twin responds:</div>
       <p id="checkin-twin-text" style="color:#e2e8f0;line-height:1.8;margin:0"></p>
+    </div>
+    <!-- Check-in History -->
+    <div class="checkin-history" id="checkin-history">
+      <h3>Past Check-Ins</h3>
+      <div class="checkin-history-list" id="checkin-history-list">
+        <div class="checkin-empty" id="checkin-empty">No check-ins yet. Complete your first weekly check-in above to start building your history.</div>
+      </div>
     </div>
     <!-- Year 2 teaser (shown at week 48+) -->
     <div id="y2-teaser" style="display:none;background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(192,132,252,0.04));border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:24px;margin:24px 0;text-align:center">
@@ -2840,7 +2970,7 @@ async function cancelSubscription() {
     const res = await fetch('/api/account/cancel', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     alert(data.message || 'Subscription cancelled.');
-  } catch (e) { alert('Error cancelling. Please email support@mirrormind.ai'); }
+  } catch (e) { showToast('Error cancelling. Please email support@mirrormind.ai'); }
   btn.textContent = 'Cancel Subscription';
   btn.disabled = false;
 }
@@ -2897,6 +3027,10 @@ async function loadGrowthPlan() {
     }
   } catch (e) { console.warn('[Plan] Week data fetch failed:', e); }
 
+  // Update progress visualization
+  updateProgressRing(week);
+  loadCheckinHistory();
+
   // Show Year 2 teaser for weeks 48+
   const y2Teaser = document.getElementById('y2-teaser');
   if (y2Teaser) {
@@ -2951,12 +3085,106 @@ async function submitCheckin() {
       document.getElementById('checkin-twin-text').textContent = data.twinResponse;
       document.getElementById('checkin-twin-response').style.display = 'block';
       document.getElementById('checkin-form').style.display = 'none';
+      // Save to local history
+      const history = JSON.parse(localStorage.getItem('mm_checkin_history') || '[]');
+      history.push({ planWeek: week, q1WhatChanged: q1, q2WhatAvoided: q2, q3WhatNoticed: q3, twinResponse: data.twinResponse, createdAt: new Date().toISOString() });
+      localStorage.setItem('mm_checkin_history', JSON.stringify(history));
       // Advance week counter
       localStorage.setItem('mm_plan_week', String(week + 1));
+      // Refresh progress visualization
+      updateProgressRing(week + 1);
+      loadCheckinHistory();
     }
-  } catch (e) { alert('Error submitting check-in. Please try again.'); }
+  } catch (e) { showToast('Error submitting check-in. Please try again.'); }
   btn.textContent = 'Submit Check-In →';
   btn.disabled = false;
+}
+
+// ── PROGRESS VISUALIZATION FUNCTIONS ──
+function updateProgressRing(week) {
+  const pct = Math.min(Math.round((week / 52) * 100), 100);
+  const circumference = 2 * Math.PI * 42; // r=42
+  const offset = circumference - (pct / 100) * circumference;
+  const circle = document.getElementById('progress-ring-circle');
+  if (circle) circle.style.strokeDashoffset = offset;
+  const pctEl = document.getElementById('progress-pct');
+  if (pctEl) pctEl.textContent = pct + '%';
+
+  // Calculate streak from localStorage check-in history
+  const history = JSON.parse(localStorage.getItem('mm_checkin_history') || '[]');
+  let streak = 0;
+  for (let w = week - 1; w >= 1; w--) {
+    if (history.find(h => h.planWeek === w)) streak++;
+    else break;
+  }
+  // If current week has a check-in, add it
+  if (history.find(h => h.planWeek === week)) streak++;
+
+  document.getElementById('stat-streak').textContent = streak + ' week' + (streak !== 1 ? 's' : '');
+  document.getElementById('stat-checkins').textContent = history.length + ' / 52';
+
+  // Count checkpoints
+  const checkpoints = [13, 26, 39, 52].filter(cw => cw < week).length;
+  document.getElementById('stat-checkpoints').textContent = checkpoints + ' / 4';
+
+  // Next check-in
+  const thisWeekDone = history.find(h => h.planWeek === week);
+  document.getElementById('stat-next').textContent = thisWeekDone ? 'Next Monday' : 'This week';
+}
+
+async function loadCheckinHistory() {
+  const list = document.getElementById('checkin-history-list');
+  const empty = document.getElementById('checkin-empty');
+  const token = localStorage.getItem('mm_session_token');
+  const sessionId = window.mirrorSessionId;
+
+  // Try to load from server first
+  let history = [];
+  try {
+    const params = new URLSearchParams();
+    if (token) {
+      const user = JSON.parse(localStorage.getItem('mm_user') || '{}');
+      if (user.id) params.set('userId', user.id);
+    }
+    if (sessionId) params.set('sessionId', sessionId);
+    const res = await fetch('/api/checkins?' + params.toString());
+    const data = await res.json();
+    if (data.checkins && data.checkins.length > 0) {
+      history = data.checkins;
+      localStorage.setItem('mm_checkin_history', JSON.stringify(history));
+    }
+  } catch (e) {
+    console.warn('[Plan] Failed to load check-in history from server:', e);
+  }
+
+  // Fallback to localStorage
+  if (history.length === 0) {
+    history = JSON.parse(localStorage.getItem('mm_checkin_history') || '[]');
+  }
+
+  if (history.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Render history items (newest first)
+  const sorted = [...history].sort((a, b) => (b.planWeek || b.plan_week || 0) - (a.planWeek || a.plan_week || 0));
+  list.innerHTML = sorted.slice(0, 10).map(ci => {
+    const w = ci.planWeek || ci.plan_week || '?';
+    const date = ci.createdAt || ci.created_at ? new Date(ci.createdAt || ci.created_at).toLocaleDateString() : '';
+    const preview = ci.q1WhatChanged || ci.q1_what_changed || ci.q1 || '';
+    const twin = ci.twinResponse || ci.twin_response || '';
+    return `<div class="checkin-history-item" onclick="this.classList.toggle('expanded')">
+      <div class="chi-header"><span class="chi-week">Week ${w}</span><span class="chi-date">${date}</span></div>
+      <div class="chi-preview">${preview}</div>
+      ${twin ? `<div class="chi-twin"><strong>Twin:</strong> ${twin}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Update progress ring with actual data
+  const week = parseInt(localStorage.getItem('mm_plan_week') || '1', 10);
+  updateProgressRing(week);
 }
 
 // ── YEAR 2 PLAN FUNCTIONS ──
