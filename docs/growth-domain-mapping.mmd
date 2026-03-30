@@ -1,0 +1,119 @@
+flowchart LR
+    %% ── Data Inputs ──────────────────────────────────────────────────────
+    subgraph INPUTS["  Input Data Sources  "]
+        direction TB
+        I1[/"52 Weekly\nCheck-Ins"/]
+        I2[/"4 Checkpoint\nReviews"/]
+        I3[/"4 Forward\nCommitments"/]
+    end
+
+    INPUTS --> STEP1
+
+    %% ── Step 1 Header ────────────────────────────────────────────────────
+    STEP1[[STEP 1 · Growth Domain Mapping\nAll Year 1 habits and checkpoint responses\nare categorised into five growth domains]]
+
+    STEP1 --> D1
+    STEP1 --> D2
+    STEP1 --> D3
+    STEP1 --> D4
+    STEP1 --> D5
+
+    %% ── Domain 1: Self-Awareness ─────────────────────────────────────────
+    subgraph SA["  Domain 1 · Self-Awareness  "]
+        direction TB
+        D1([Self-Awareness\nRecognising own patterns\nin real time])
+        D1 --> SA_EV["Evidence signals:\n· Weekly check-in language about noticing patterns\n· Q1 checkpoint: What changed this quarter?\n· Inflection points in self-description across 52 weeks"]
+        SA_EV --> SA_Q{Habit automatic\nwithout prompting?}
+        SA_Q -->|Yes| SA_INT[INTEGRATED\nYear 2: Do not revisit]
+        SA_Q -->|Practised but\neffortful| SA_ACT[ACTIVE\nYear 2: Deepen — add\nreal-time interruption habits]
+        SA_Q -->|Repeatedly\navoided| SA_RES[RESISTANT\nYear 2: Directly confront\nwhy naming the pattern\nfeels threatening]
+        SA_Q -->|Not addressed\nin Year 1| SA_UNT[UNTOUCHED\nYear 2: Introduce in Q1\nas foundational work]
+    end
+
+    %% ── Domain 2: Relational Behaviour ──────────────────────────────────
+    subgraph RB["  Domain 2 · Relational Behaviour  "]
+        direction TB
+        D2([Relational Behaviour\nHow the pattern plays out\nin relationships with others])
+        D2 --> RB_EV["Evidence signals:\n· Checkpoint avoidance answers referencing specific people\n· External validation responses from 3 nominated contacts\n· Forward commitments naming relational contexts"]
+        RB_EV --> RB_Q{Consistent change\nacross relationships?}
+        RB_Q -->|Yes| RB_INT[INTEGRATED\nYear 2: Do not revisit]
+        RB_Q -->|Changed in safe\nrelationships only| RB_ACT[ACTIVE\nYear 2: Extend to higher-\nstakes relationships]
+        RB_Q -->|Same pattern\nin all relationships| RB_RES[RESISTANT\nYear 2: Target the one\nrelationship where the\npattern is most defended]
+        RB_Q -->|Relational habits\nnever attempted| RB_UNT[UNTOUCHED\nYear 2: Introduce in Q2\nafter self-awareness base]
+    end
+
+    %% ── Domain 3: Professional Conduct ──────────────────────────────────
+    subgraph PC["  Domain 3 · Professional Conduct  "]
+        direction TB
+        D3([Professional Conduct\nHow the pattern operates\nin work and performance contexts])
+        D3 --> PC_EV["Evidence signals:\n· Check-in responses mentioning work, colleagues, output\n· Checkpoint surprises referencing professional contexts\n· Gap between personal and professional change rate"]
+        PC_EV --> PC_Q{Visible change\nin professional context?}
+        PC_Q -->|Yes| PC_INT[INTEGRATED\nYear 2: Do not revisit]
+        PC_Q -->|Personal change\nnot yet professional| PC_ACT[ACTIVE\nYear 2: Bridge personal\ngains into work context]
+        PC_Q -->|Professional context\nmost defended| PC_RES[RESISTANT\nYear 2: Directly address\nwhy professional identity\nresists the pattern change]
+        PC_Q -->|Work context\nnever engaged| PC_UNT[UNTOUCHED\nYear 2: Introduce in Q2\nor Q3 depending on readiness]
+    end
+
+    %% ── Domain 4: Internal Regulation ───────────────────────────────────
+    subgraph IR["  Domain 4 · Internal Regulation  "]
+        direction TB
+        D4([Internal Regulation\nManaging the emotional and\nphysiological stress response])
+        D4 --> IR_EV["Evidence signals:\n· Check-in language describing emotional states under pressure\n· Checkpoint Q3 surprises about internal experience\n· Consistency of habits under high-stress weeks"]
+        IR_EV --> IR_Q{Regulation habits\nstable under pressure?}
+        IR_Q -->|Yes| IR_INT[INTEGRATED\nYear 2: Do not revisit]
+        IR_Q -->|Works in low-stress\nnot high-stress| IR_ACT[ACTIVE\nYear 2: Stress-test the\nregulation habit under\nhigher-pressure conditions]
+        IR_Q -->|Regulation habits\nconsistently dropped| IR_RES[RESISTANT\nYear 2: Investigate the\nspecific trigger that\ncauses regulation collapse]
+        IR_Q -->|No regulation\nhabits attempted| IR_UNT[UNTOUCHED\nYear 2: Introduce as\nfoundational Q1 work]
+    end
+
+    %% ── Domain 5: Identity Expression ───────────────────────────────────
+    subgraph IE["  Domain 5 · Identity Expression  "]
+        direction TB
+        D5([Identity Expression\nHow the user presents and\ndefines themselves to the world])
+        D5 --> IE_EV["Evidence signals:\n· Year-End Reflection: distance between Week 1 and Week 52 self\n· Archetype stability record across 4 checkpoints\n· External validation: what change did others observe?"]
+        IE_EV --> IE_Q{Identity narrative\naligned with growth?}
+        IE_Q -->|Yes — self and\nexternal views aligned| IE_INT[INTEGRATED\nYear 2: Do not revisit]
+        IE_Q -->|Internal shift not\nyet expressed externally| IE_ACT[ACTIVE\nYear 2: Externalisation habits —\nmaking the internal visible]
+        IE_Q -->|Identity strongly\ntied to old pattern| IE_RES[RESISTANT\nYear 2: Directly challenge\nthe identity story that\nprotects the old pattern]
+        IE_Q -->|Identity work\nnever engaged| IE_UNT[UNTOUCHED\nYear 2: Introduce in Q4\nas culminating work]
+    end
+
+    %% ── Status Consolidation ─────────────────────────────────────────────
+    SA_INT & RB_INT & PC_INT & IR_INT & IE_INT --> CONS_INT
+    SA_ACT & RB_ACT & PC_ACT & IR_ACT & IE_ACT --> CONS_ACT
+    SA_RES & RB_RES & PC_RES & IR_RES & IE_RES --> CONS_RES
+    SA_UNT & RB_UNT & PC_UNT & IR_UNT & IE_UNT --> CONS_UNT
+
+    subgraph MAP_OUT["  Domain Status Map Output  "]
+        direction TB
+        CONS_INT[INTEGRATED domains\nRemoved from Year 2 plan\nNo habit allocation]
+        CONS_ACT[ACTIVE domains\nDeepened in Year 2\nHabits escalate in difficulty]
+        CONS_RES[RESISTANT domains\nDirectly confronted in Year 2\nQ1 or Q2 priority]
+        CONS_UNT[UNTOUCHED domains\nSequenced into Year 2\nbased on archetype logic]
+    end
+
+    MAP_OUT --> NEXT[[Passes to STEP 2\nShadow Pattern Evolution Assessment]]
+
+    %% ── Styling ──────────────────────────────────────────────────────────
+    classDef input fill:#16213e,stroke:#4F46E5,color:#a5b4fc,stroke-width:1px
+    classDef step fill:#1e1b4b,stroke:#7C3AED,color:#ddd6fe,stroke-width:2px
+    classDef domain fill:#14213d,stroke:#4F46E5,color:#bfdbfe,stroke-width:1.5px
+    classDef evidence fill:#0f172a,stroke:#334155,color:#94a3b8,stroke-width:1px
+    classDef decision fill:#1a1a2e,stroke:#6d28d9,color:#c4b5fd,stroke-width:1.5px
+    classDef integrated fill:#052e16,stroke:#16a34a,color:#86efac,stroke-width:1px
+    classDef active fill:#14532d,stroke:#22c55e,color:#bbf7d0,stroke-width:1px
+    classDef resistant fill:#450a0a,stroke:#dc2626,color:#fca5a5,stroke-width:1px
+    classDef untouched fill:#431407,stroke:#ea580c,color:#fed7aa,stroke-width:1px
+    classDef output fill:#1e1b4b,stroke:#7C3AED,color:#ddd6fe,stroke-width:1px
+    classDef next fill:#0f172a,stroke:#7C3AED,color:#f0abfc,stroke-width:2px
+
+    class I1,I2,I3 input
+    class STEP1 step
+    class D1,D2,D3,D4,D5 domain
+    class SA_EV,RB_EV,PC_EV,IR_EV,IE_EV evidence
+    class SA_Q,RB_Q,PC_Q,IR_Q,IE_Q decision
+    class SA_INT,RB_INT,PC_INT,IR_INT,IE_INT,CONS_INT integrated
+    class SA_ACT,RB_ACT,PC_ACT,IR_ACT,IE_ACT,CONS_ACT active
+    class SA_RES,RB_RES,PC_RES,IR_RES,IE_RES,CONS_RES resistant
+    class SA_UNT,RB_UNT,PC_UNT,IR_UNT,IE_UNT,CONS_UNT untouched
+    class NEXT next

@@ -1,0 +1,110 @@
+flowchart TD
+    %% ── Six Data Inputs ─────────────────────────────────────────────────
+    subgraph INPUTS["  Six Data Inputs  "]
+        direction TB
+        D1[/"52 Weekly Check-In Responses\nConsistency · Avoidance clusters · Inflection points"/]
+        D2[/"4 Quarterly Checkpoint Reviews\nLongitudinal pattern map across Q1–Q4"/]
+        D3[/"4 Forward Commitments\nFulfilment rate across the year"/]
+        D4[/"Year-End Reflection Document\nEmotional register · Distance travelled · Self-assessment"/]
+        D5[/"External Validation Responses\n3 people nominated by the user"/]
+        D6[/"Archetype Stability Record\nSingle vs dual-archetype · Stress vs growth dominance"/]
+    end
+
+    %% ── Step 1: Growth Domain Mapping ───────────────────────────────────
+    D1 --> S1
+    D2 --> S1
+    D3 --> S1
+
+    S1[[STEP 1 · Growth Domain Mapping\nCategorise all Year 1 habits and checkpoint responses\ninto five growth domains]]
+
+    S1 --> DOM1[Self-Awareness]
+    S1 --> DOM2[Relational Behaviour]
+    S1 --> DOM3[Professional Conduct]
+    S1 --> DOM4[Internal Regulation]
+    S1 --> DOM5[Identity Expression]
+
+    DOM1 & DOM2 & DOM3 & DOM4 & DOM5 --> STATUS{Assign status\nto each domain}
+
+    STATUS -->|Habit is now automatic| ST_INT[INTEGRATED\nDo not revisit in Year 2]
+    STATUS -->|Practised but not automatic| ST_ACT[ACTIVE\nDeepen in Year 2]
+    STATUS -->|Repeatedly avoided| ST_RES[RESISTANT\nDirectly confront in Year 2]
+    STATUS -->|Not addressed in Year 1| ST_UNT[UNTOUCHED\nSequence into Year 2]
+
+    ST_INT & ST_ACT & ST_RES & ST_UNT --> S2
+
+    %% ── Step 2: Shadow Pattern Evolution Assessment ──────────────────────
+    D1 --> S2
+    D2 --> S2
+    D4 --> S2
+
+    S2[[STEP 2 · Shadow Pattern Evolution Assessment\nCompare Week 1 intake description against\n52 weeks of behavioural evidence]]
+
+    S2 --> SHADOW{Shadow evolution\nscore}
+
+    SHADOW -->|Pattern as entrenched\nas at Week 1| SH1[UNCHANGED\nYear 2 investigates why\nYear 1 did not move the needle]
+    SHADOW -->|Can name the pattern\nbut has not interrupted it| SH2[AWARE BUT ACTIVE\nYear 2 builds interruption habits]
+    SHADOW -->|Regularly catches and\nredirects the pattern| SH3[INTERRUPTED\nYear 2 begins at Integration phase]
+    SHADOW -->|Pattern no longer\noperates automatically| SH4[INTEGRATED\nYear 2 targets the next frontier]
+
+    SH1 & SH2 & SH3 & SH4 --> S3
+
+    %% ── Step 3: Relational Frontier Identification ───────────────────────
+    D2 --> S3
+    D5 --> S3
+    D6 --> S3
+
+    S3[[STEP 3 · Relational Frontier Identification\nIdentify the specific relationship context where\nthe shadow pattern is most entrenched and defended]]
+
+    S3 --> RF1{Cross-reference\navoidance patterns\nwith external validation}
+
+    RF1 -->|External responses align\nwith self-assessment| RF_VER[Growth verified\nFrontier is the next\nuntested relationship domain]
+    RF1 -->|External responses diverge\nfrom self-assessment| RF_DIV[Internal work not yet\nvisible externally\nFrontier is externalisation\nin the specific relationship\nwhere the gap is largest]
+
+    RF_VER & RF_DIV --> S4
+
+    %% ── Step 4: Year 2 Theme Selection ──────────────────────────────────
+    D3 --> S4
+    D4 --> S4
+    D6 --> S4
+
+    S4[[STEP 4 · Year 2 Theme Selection\nSynthesize all three preceding steps\nto select one of four Year 2 themes]]
+
+    S4 --> THEME{Select Year 2 theme\nbased on fulfilment rate\nshadow score and frontier}
+
+    THEME -->|Internal growth verified\nbut not visible to others| TH1[EXTERNALISATION\nQ1 Making the internal external\nQ2 Relational testing\nQ3 Social integration\nQ4 Identity consolidation]
+
+    THEME -->|Strong gains in 3 of 5 domains\none persistent resistant domain| TH2[DEEPENING\nQ1 Investigating the resistant domain\nQ2 Targeted disruption\nQ3 Integration under pressure\nQ4 Full-domain synthesis]
+
+    THEME -->|All domains Active or Integrated\nshadow at Interrupted or Integrated| TH3[EXPANSION\nQ1 Hardest relational frontier\nQ2 Professional domain challenge\nQ3 Identity expression\nQ4 Legacy and contribution]
+
+    THEME -->|Low fulfilment rate\nshadow Unchanged or Aware but active| TH4[RECALIBRATION\nQ1 Archetype re-examination\nQ2 Structural habit redesign\nQ3 Friction removal\nQ4 Recommitment]
+
+    %% ── Year 2 Plan Output ───────────────────────────────────────────────
+    TH1 & TH2 & TH3 & TH4 --> OUTPUT
+
+    OUTPUT([Year 2 Plan Generated\nYear 1 Summary · Updated Archetype Profile\nYear 2 Theme and Rationale · Four-Quarter Arc\nWeek 1 Habit · Forward Commitment · Growth Distance Statement])
+
+    %% ── Styling ─────────────────────────────────────────────────────────
+    classDef input fill:#16213e,stroke:#4F46E5,color:#a5b4fc,stroke-width:1px
+    classDef step fill:#1e1b4b,stroke:#7C3AED,color:#ddd6fe,stroke-width:2px
+    classDef domain fill:#14213d,stroke:#4F46E5,color:#bfdbfe,stroke-width:1px
+    classDef status_int fill:#052e16,stroke:#16a34a,color:#86efac,stroke-width:1px
+    classDef status_act fill:#1c3a1c,stroke:#22c55e,color:#bbf7d0,stroke-width:1px
+    classDef status_res fill:#3b1515,stroke:#dc2626,color:#fca5a5,stroke-width:1px
+    classDef status_unt fill:#1c1917,stroke:#d97706,color:#fcd34d,stroke-width:1px
+    classDef shadow fill:#2d1b69,stroke:#7C3AED,color:#e9d5ff,stroke-width:1px
+    classDef theme fill:#0f172a,stroke:#7C3AED,color:#f0abfc,stroke-width:1.5px
+    classDef output fill:#052e16,stroke:#16a34a,color:#86efac,stroke-width:2px
+    classDef decision fill:#1a1a2e,stroke:#6d28d9,color:#c4b5fd,stroke-width:1.5px
+
+    class D1,D2,D3,D4,D5,D6 input
+    class S1,S2,S3,S4 step
+    class DOM1,DOM2,DOM3,DOM4,DOM5 domain
+    class ST_INT,SH4 status_int
+    class ST_ACT,SH3 status_act
+    class ST_RES,SH1 status_res
+    class ST_UNT,SH2 status_unt
+    class RF_VER,RF_DIV shadow
+    class TH1,TH2,TH3,TH4 theme
+    class OUTPUT output
+    class STATUS,SHADOW,RF1,THEME decision

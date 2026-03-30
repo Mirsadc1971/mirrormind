@@ -1,0 +1,87 @@
+flowchart TD
+    %% Entry: Tier Gate
+    START([User reaches Week 13 or 26 or 39 or 52])
+    START --> TIER_CHECK{Which tier\nis the user on?}
+
+    TIER_CHECK -->|Free| LOCKED([Checkpoint locked\nUpgrade to Core, Social or Deep\nto unlock Q Integration Checkpoints])
+    TIER_CHECK -->|Core| Q1_ONLY{Week 13 only}
+    TIER_CHECK -->|Social| Q1_Q2{Weeks 13 and 26 only}
+    TIER_CHECK -->|Deep| ALL_CKPT[All 4 Checkpoints\nWeeks 13 · 26 · 39 · 52]
+
+    Q1_ONLY -->|Week 13| ENTER
+    Q1_ONLY -->|Week 26 or 39 or 52| LOCKED2([Upgrade to Social or Deep\nto unlock this checkpoint])
+
+    Q1_Q2 -->|Week 13 or 26| ENTER
+    Q1_Q2 -->|Week 39 or 52| LOCKED3([Upgrade to Deep\nto unlock Q3 and Q4 Checkpoints])
+
+    ALL_CKPT --> ENTER
+
+    %% The Four Questions
+    ENTER([Checkpoint session begins\nAI Twin opens the review])
+    ENTER --> Q1[Q1 · What changed this quarter?\nName concrete behavioural changes\nnot intentions or insights]
+    Q1 --> Q2[Q2 · What did I avoid?\nIdentify where the old pattern\nreasserted itself]
+    Q2 --> Q3[Q3 · What surprised me?\nSurfaces blind spots the plan\ndid not anticipate]
+    Q3 --> Q4[Q4 · What is the focus for next quarter?\nTwin proposes emphasis\nbased on Q1 through Q3 answers]
+    Q4 --> TWIN_PROCESS[[AI Twin processes all four answers\nagainst archetype profile data]]
+
+    %% Outcome 1: Archetype Confirmation or Revision
+    TWIN_PROCESS --> OUT1{Outcome 1\nArchetype match?}
+    OUT1 -->|Behavioural data confirms\noriginal archetype| CONFIRM[Archetype confirmed\nPlan continues unchanged]
+    OUT1 -->|Responses reveal a more\ndominant secondary archetype| REVISE[Secondary archetype detected\nTwin explains the discrepancy]
+    REVISE --> USER_CHOICE{User chooses}
+    USER_CHOICE -->|Keep original archetype| CONFIRM
+    USER_CHOICE -->|Recalibrate to new archetype| REBUILD[Full plan rebuilt around new archetype\nCompleted weeks retained as context]
+    REBUILD --> OUT2
+    CONFIRM --> OUT2
+
+    %% Outcome 2: Habit Adjustment
+    OUT2{Outcome 2\nHabit adjustment\nbased on Q1 through Q3 signals}
+    OUT2 -->|Most habits completed\nGenuine change reported| ESCALATE[ESCALATE\nNext quarter habits increase\nin difficulty and relational exposure]
+    OUT2 -->|Habits completed but\npattern reasserting| MAINTAIN[MAINTAIN AND REFRAME\nSame difficulty level\nHabit framing shifts to address\nspecific avoidance pattern]
+    OUT2 -->|Significant habits avoided| BREAKDOWN[BREAK DOWN\nHabits decomposed into smaller steps\nTwin identifies specific friction point]
+    ESCALATE --> OUT3
+    MAINTAIN --> OUT3
+    BREAKDOWN --> OUT3
+
+    %% Outcome 3: Forward Commitment
+    OUT3[Outcome 3 · Forward Commitment\nTwin asks: Name one specific thing\nyou will do differently next quarter]
+    OUT3 --> COMMIT[User states commitment\nStored verbatim in profile]
+    COMMIT --> NEXT_QTR[Next quarter begins\nwith adjusted plan]
+
+    %% Accountability Loop
+    NEXT_QTR --> LOOP_CHECK{Reaches next\nCheckpoint?}
+    LOOP_CHECK -->|Yes| RECALL[Twin opens with the stored commitment\nand asks: What happened?]
+    RECALL --> TWIN_PROCESS
+    LOOP_CHECK -->|Week 52 Deep only| YEAR_END
+
+    %% Week 52 Year-End Review
+    YEAR_END([Week 52 · Year-End Review\nDeep tier only])
+    YEAR_END --> YE1[Re-read Week 1 journal entry\nWrite response from who you are now]
+    YE1 --> YE2[Collect external validation\nAsk 3 people what change they observed]
+    YE2 --> YE3[Twin generates Year-End\nReflection Document]
+    YE3 --> YE4[Twin uses 52 weeks of check-in data\nto generate personalised Year 2 Plan]
+    YE4 --> DONE([Year 2 Plan delivered\nPlan counter resets to Week 1 of Year 2])
+
+    %% Styling
+    classDef locked fill:#2a1a1a,stroke:#7f2020,color:#e05050,stroke-width:1px
+    classDef entry fill:#1a1a2e,stroke:#7C3AED,color:#c4b5fd,stroke-width:2px
+    classDef question fill:#16213e,stroke:#4F46E5,color:#a5b4fc,stroke-width:1px
+    classDef process fill:#1e1b4b,stroke:#6d28d9,color:#ddd6fe,stroke-width:1px
+    classDef outcome fill:#14213d,stroke:#7C3AED,color:#e9d5ff,stroke-width:1.5px
+    classDef escalate fill:#052e16,stroke:#16a34a,color:#86efac,stroke-width:1px
+    classDef maintain fill:#1c1917,stroke:#d97706,color:#fcd34d,stroke-width:1px
+    classDef breakdown fill:#2d1b69,stroke:#7C3AED,color:#c4b5fd,stroke-width:1px
+    classDef yearend fill:#0f172a,stroke:#7C3AED,color:#f0abfc,stroke-width:2px
+    classDef done fill:#052e16,stroke:#16a34a,color:#86efac,stroke-width:2px
+
+    class LOCKED,LOCKED2,LOCKED3 locked
+    class START,ENTER entry
+    class Q1,Q2,Q3,Q4 question
+    class TWIN_PROCESS,RECALL process
+    class OUT1,OUT2,OUT3,CONFIRM,REVISE,USER_CHOICE,REBUILD outcome
+    class ESCALATE escalate
+    class MAINTAIN maintain
+    class BREAKDOWN breakdown
+    class YEAR_END,YE1,YE2,YE3,YE4 yearend
+    class DONE done
+    class COMMIT,NEXT_QTR,LOOP_CHECK process

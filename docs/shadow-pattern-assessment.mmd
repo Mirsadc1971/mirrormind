@@ -1,0 +1,115 @@
+flowchart TD
+    %% ── Inputs from Step 1 ───────────────────────────────────────────────
+    subgraph FROM_S1["  From Step 1 · Domain Status Map Output  "]
+        direction LR
+        S1_INT[/"INTEGRATED domains\nHabit now structural\nNo Year 2 allocation"/]
+        S1_ACT[/"ACTIVE domains\nPractised but not automatic\nYear 2 deepens"/]
+        S1_RES[/"RESISTANT domains\nRepeatedly avoided\nYear 2 confronts directly"/]
+        S1_UNT[/"UNTOUCHED domains\nNot addressed in Year 1\nYear 2 sequences in"/]
+    end
+
+    %% ── Additional Data Inputs ───────────────────────────────────────────
+    subgraph ADD_INPUTS["  Additional Data Inputs  "]
+        direction LR
+        D1[/"52 Weekly\nCheck-In Responses\nLanguage shift over time"/]
+        D2[/"4 Quarterly\nCheckpoint Reviews\nWhat changed · What was avoided"/]
+        D4[/"Year-End\nReflection Document\nDistance travelled · Self-assessment"/]
+    end
+
+    %% ── Step 2 Entry ─────────────────────────────────────────────────────
+    FROM_S1 --> S2
+    ADD_INPUTS --> S2
+
+    S2[[STEP 2 · Shadow Pattern Evolution Assessment\nCompare Week 1 intake description of the shadow pattern\nagainst 52 weeks of accumulated behavioural evidence]]
+
+    %% ── Three Analytical Lenses ──────────────────────────────────────────
+    S2 --> LENS1
+    S2 --> LENS2
+    S2 --> LENS3
+
+    subgraph LENSES["  Three Analytical Lenses  "]
+        direction TB
+
+        LENS1["LENS A · Language Drift Analysis\nCompare how the user described their pattern\nat Week 1 intake vs. Week 52 Year-End Reflection.\nShift from third-person description to first-person\nownership signals genuine internalisation.\nFlat or defensive language signals resistance."]
+
+        LENS2["LENS B · Behavioural Consistency Index\nCross-reference the Domain Status Map:\n· Ratio of INTEGRATED to RESISTANT domains\n· Which domains are RESISTANT and whether they\n  are high-stakes or low-stakes contexts\n· Whether ACTIVE domains are trending toward\n  integration or stalling at the same level"]
+
+        LENS3["LENS C · Checkpoint Avoidance Pattern\nAnalyse the Q2 answers across all 4 checkpoints:\nDid the same avoidance appear in Q1 and Q4?\nDid the avoidance shift to harder contexts?\nOr did the avoidance disappear entirely?"]
+    end
+
+    %% ── Shadow Score Decision ────────────────────────────────────────────
+    LENS1 & LENS2 & LENS3 --> SCORE_Q
+
+    SCORE_Q{What does the combined\nevidence show about the\nshadow pattern?}
+
+    %% ── Score 1: Unchanged ───────────────────────────────────────────────
+    SCORE_Q -->|Language flat or defensive\nMostly RESISTANT domains\nSame avoidance in Q1 and Q4| SC1
+
+    subgraph UNCHANGED["  Score 1 · UNCHANGED  "]
+        direction TB
+        SC1([UNCHANGED\nThe pattern is as entrenched\nas it was at Week 1])
+        SC1 --> SC1_WHY["Twin investigates root cause:\nWas the plan misaligned with the archetype?\nWere the habits too abstract or too difficult?\nDid external circumstances block engagement?\nIs the archetype assignment itself incorrect?"]
+        SC1_WHY --> SC1_Y2["YEAR 2 APPROACH\nRecalibration theme selected\nQ1: Full archetype re-examination\nQ2: Structural habit redesign\nQ3: Friction removal\nQ4: Recommitment with new foundation\nWeek 1 habit: Smallest possible\nbehavioural step in the most\nresistant domain"]
+    end
+
+    %% ── Score 2: Aware but Active ────────────────────────────────────────
+    SCORE_Q -->|Language shows naming\nbut not interrupting\nMix of ACTIVE and RESISTANT\nAvoidance shifted to harder contexts| SC2
+
+    subgraph AWARE["  Score 2 · AWARE BUT ACTIVE  "]
+        direction TB
+        SC2([AWARE BUT ACTIVE\nUser can name the pattern in real time\nbut has not yet interrupted it consistently])
+        SC2 --> SC2_SIG["Key signals:\nUser describes catching the pattern after it played out\nnot before or during\nCheckpoint avoidance answers are specific and honest\nbut describe the same contexts repeatedly\nDomain Status Map shows mostly ACTIVE domains\nwith one or two RESISTANT"]
+        SC2_SIG --> SC2_Y2["YEAR 2 APPROACH\nDeepening theme selected\nQ1: Build real-time interruption habits\nQ2: Practise the interruption in\n    the most resistant context\nQ3: Embed the new response\n    as the default\nQ4: Full-domain synthesis\nWeek 1 habit: Pause-and-name drill\nin a specific daily trigger context"]
+    end
+
+    %% ── Score 3: Interrupted ─────────────────────────────────────────────
+    SCORE_Q -->|Language shows catching\nand redirecting in real time\nMostly ACTIVE domains\nAvoidance only in high-stakes contexts| SC3
+
+    subgraph INTERRUPTED["  Score 3 · INTERRUPTED  "]
+        direction TB
+        SC3([INTERRUPTED\nUser regularly catches and redirects\nthe pattern before it fully plays out])
+        SC3 --> SC3_SIG["Key signals:\nCheckpoint avoidance answers describe\nspecific high-stakes contexts only\nnot general patterns\nDomain Status Map shows 2 or more\nINTEGRATED domains\nYear-End Reflection shows clear\nlanguage about who they are becoming"]
+        SC3_SIG --> SC3_Y2["YEAR 2 APPROACH\nDeepening or Expansion theme selected\nbased on relational frontier result\nQ1: Target the remaining high-stakes\n    context where pattern persists\nQ2: Relational testing under pressure\nQ3: Integration across all domains\nQ4: Identity consolidation\nYear 2 begins at Integration phase\nnot Awareness phase"]
+    end
+
+    %% ── Score 4: Integrated ──────────────────────────────────────────────
+    SCORE_Q -->|Language shows ownership\nand alternative response\nMostly INTEGRATED domains\nAvoidance largely absent from Q4| SC4
+
+    subgraph INTEGRATED["  Score 4 · INTEGRATED  "]
+        direction TB
+        SC4([INTEGRATED\nThe pattern no longer operates automatically\nUser has built a genuine alternative response])
+        SC4 --> SC4_SIG["Key signals:\nCheckpoint Q4 avoidance answers describe\nnew contexts not old ones\nExternal validation confirms visible change\nDomain Status Map shows 3 or more\nINTEGRATED domains\nYear-End Reflection describes identity shift\nnot just behaviour shift"]
+        SC4_SIG --> SC4_Y2["YEAR 2 APPROACH\nExpansion theme selected\nQ1: The hardest relational frontier\nQ2: Professional domain challenge\nQ3: Identity expression\nQ4: Legacy and contribution\nYear 2 targets what was not\npossible before Year 1 was complete"]
+    end
+
+    %% ── Output to Step 3 ─────────────────────────────────────────────────
+    SC1_Y2 & SC2_Y2 & SC3_Y2 & SC4_Y2 --> OUT
+
+    OUT(["Shadow Score + Year 2 Direction\npasses to STEP 3\nRelational Frontier Identification"])
+
+    %% ── Styling ──────────────────────────────────────────────────────────
+    classDef input fill:#16213e,stroke:#4F46E5,color:#a5b4fc,stroke-width:1px
+    classDef step fill:#1e1b4b,stroke:#7C3AED,color:#ddd6fe,stroke-width:2px
+    classDef lens fill:#0f172a,stroke:#334155,color:#94a3b8,stroke-width:1px
+    classDef decision fill:#1a1a2e,stroke:#6d28d9,color:#c4b5fd,stroke-width:1.5px
+    classDef unchanged fill:#450a0a,stroke:#dc2626,color:#fca5a5,stroke-width:1.5px
+    classDef aware fill:#431407,stroke:#ea580c,color:#fed7aa,stroke-width:1.5px
+    classDef interrupted fill:#14532d,stroke:#22c55e,color:#bbf7d0,stroke-width:1.5px
+    classDef integrated fill:#052e16,stroke:#16a34a,color:#86efac,stroke-width:1.5px
+    classDef detail fill:#0f172a,stroke:#334155,color:#94a3b8,stroke-width:1px
+    classDef y2 fill:#1e1b4b,stroke:#7C3AED,color:#ddd6fe,stroke-width:1px
+    classDef out fill:#0f172a,stroke:#7C3AED,color:#f0abfc,stroke-width:2px
+    classDef s1input fill:#052e16,stroke:#16a34a,color:#86efac,stroke-width:1px
+
+    class S1_INT,S1_ACT,S1_RES,S1_UNT s1input
+    class D1,D2,D4 input
+    class S2 step
+    class LENS1,LENS2,LENS3 lens
+    class SCORE_Q decision
+    class SC1 unchanged
+    class SC2 aware
+    class SC3 interrupted
+    class SC4 integrated
+    class SC1_WHY,SC2_SIG,SC3_SIG,SC4_SIG detail
+    class SC1_Y2,SC2_Y2,SC3_Y2,SC4_Y2 y2
+    class OUT out
