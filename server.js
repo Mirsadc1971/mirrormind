@@ -3,9 +3,11 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
+import multer from 'multer';
 
 // ─── Supabase client (MirrorMind project) ────────────────────────────────────
 const SUPABASE_URL = 'https://mlsuttoccqcpjhvkfeuv.supabase.co';
@@ -279,6 +281,24 @@ app.post('/api/friend-survey', async (req, res) => {
   const session = profiles.get(sessionId);
   if (!session?.profile) return res.status(400).json({ error: 'No profile found.' });
 
+  // Enforce friend survey limit based on tier
+  const tier = session.tier || 'free';
+  const limit = TIER_SURVEY_LIMITS[tier] ?? 0;
+  const existingSurveys = profiles.get(`surveys_for_${sessionId}`) || [];
+  if (existingSurveys.length >= limit) {
+    const upgradeMap = { free: 'core_monthly', core: 'social_monthly', social: 'deep_monthly' };
+    return res.status(403).json({
+      error: 'Survey limit reached for your plan.',
+      tier,
+      limit,
+      used: existingSurveys.length,
+      upgradeTo: upgradeMap[tier] || null,
+      message: limit === 0
+        ? 'Upgrade to Core ($9.97/month) to send your first friend survey.'
+        : `You have used all ${limit} friend survey${limit > 1 ? 's' : ''} for this billing period. Upgrade to send more.`,
+    });
+  }
+
   const p = session.profile;
   const surveyId = crypto.randomUUID();
 
@@ -427,24 +447,94 @@ app.get('/api/launch-status', async (req, res) => {
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 
+// ─── Pricing Plans ───────────────────────────────────────────────────────────
+// PLACEHOLDER: Replace price_id values with real Stripe Price IDs once you
+// create products in your Stripe Dashboard (or via the Stripe CLI).
+// Monthly prices: create recurring prices in Stripe Dashboard.
+// Annual prices: create recurring prices with interval=year.
+// Lifetime: create a one-time price.
+//
+// To create products quickly:
+//   stripe products create --name="MirrorMind Core"
+//   stripe prices create --product=<id> --unit-amount=997 --currency=usd --recurring[interval]=month
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Friend survey limits per tier
+const TIER_SURVEY_LIMITS = {
+  free:     0,
+  core:     1,
+  social:   3,
+  deep:     5,
+  lifetime: Infinity,
+};
+
 const PLANS = {
-  starter: {
-    name: 'MirrorMind Starter',
-    price: 2900, // $29 in cents
-    description: 'Your Mirror Report + AI Twin for 30 days',
-    tier: 'starter',
+  // ── Monthly subscriptions ──────────────────────────────────────────────────
+  core_monthly: {
+    name: 'MirrorMind Core',
+    price: 997,           // $9.97/month
+    description: 'Full Mirror Report + 1 friend survey/month + AI Twin',
+    tier: 'core',
+    billing: 'monthly',
+    interval: 'month',
+    // PLACEHOLDER — replace with real Stripe Price ID after creating in Dashboard
+    stripe_price_id: process.env.STRIPE_PRICE_CORE_MONTHLY || 'price_PLACEHOLDER_core_monthly',
   },
-  pro: {
-    name: 'MirrorMind Pro (1 Year)',
-    price: 7900, // $79 in cents
-    description: 'Full Mirror Report + AI Twin for 1 year + Decision Tracker',
-    tier: 'pro',
+  social_monthly: {
+    name: 'MirrorMind Social',
+    price: 1677,          // $16.77/month
+    description: 'Full Mirror Report + 3 friend surveys/month + AI Twin + Decision Tracker',
+    tier: 'social',
+    billing: 'monthly',
+    interval: 'month',
+    stripe_price_id: process.env.STRIPE_PRICE_SOCIAL_MONTHLY || 'price_PLACEHOLDER_social_monthly',
   },
+  deep_monthly: {
+    name: 'MirrorMind Deep',
+    price: 2797,          // $27.97/month
+    description: 'Full Mirror Report + 5 friend surveys/month + AI Twin + Decision Tracker + Voice Input',
+    tier: 'deep',
+    billing: 'monthly',
+    interval: 'month',
+    stripe_price_id: process.env.STRIPE_PRICE_DEEP_MONTHLY || 'price_PLACEHOLDER_deep_monthly',
+  },
+  // ── Annual subscriptions (10% off) ────────────────────────────────────────
+  core_annual: {
+    name: 'MirrorMind Core (Annual)',
+    price: 10768,         // $107.68/year
+    description: 'Full Mirror Report + 1 friend survey/month + AI Twin — billed annually',
+    tier: 'core',
+    billing: 'annual',
+    interval: 'year',
+    stripe_price_id: process.env.STRIPE_PRICE_CORE_ANNUAL || 'price_PLACEHOLDER_core_annual',
+  },
+  social_annual: {
+    name: 'MirrorMind Social (Annual)',
+    price: 18112,         // $181.12/year
+    description: 'Full Mirror Report + 3 friend surveys/month + AI Twin + Decision Tracker — billed annually',
+    tier: 'social',
+    billing: 'annual',
+    interval: 'year',
+    stripe_price_id: process.env.STRIPE_PRICE_SOCIAL_ANNUAL || 'price_PLACEHOLDER_social_annual',
+  },
+  deep_annual: {
+    name: 'MirrorMind Deep (Annual)',
+    price: 30208,         // $302.08/year
+    description: 'Full Mirror Report + 5 friend surveys/month + AI Twin + Decision Tracker + Voice Input — billed annually',
+    tier: 'deep',
+    billing: 'annual',
+    interval: 'year',
+    stripe_price_id: process.env.STRIPE_PRICE_DEEP_ANNUAL || 'price_PLACEHOLDER_deep_annual',
+  },
+  // ── Lifetime (one-time) ────────────────────────────────────────────────────
   lifetime: {
     name: 'MirrorMind Lifetime',
-    price: 14900, // $149 in cents
-    description: 'Lifetime access to everything + all future features',
+    price: 34900,         // $349 one-time
+    description: 'Unlimited friend surveys + everything forever + all future features',
     tier: 'lifetime',
+    billing: 'one_time',
+    interval: null,
+    stripe_price_id: process.env.STRIPE_PRICE_LIFETIME || 'price_PLACEHOLDER_lifetime',
   },
 };
 
@@ -452,30 +542,59 @@ const PLANS = {
 app.post('/api/checkout', async (req, res) => {
   const { plan, email, sessionId, origin } = req.body;
   if (!plan || !PLANS[plan]) return res.status(400).json({ error: 'Invalid plan' });
-  if (!STRIPE_SECRET_KEY) return res.status(503).json({ error: 'Payments not configured yet. Coming soon!' });
+  if (!STRIPE_SECRET_KEY) {
+    return res.status(503).json({
+      error: 'Payments not configured yet.',
+      message: 'Add your STRIPE_SECRET_KEY environment variable to enable payments.',
+      placeholder: true,
+    });
+  }
 
   try {
     const stripe = new Stripe(STRIPE_SECRET_KEY);
     const planData = PLANS[plan];
     const baseUrl = origin || 'http://localhost:4000';
+    const isSubscription = planData.billing === 'monthly' || planData.billing === 'annual';
+    const isPlaceholderPrice = planData.stripe_price_id.startsWith('price_PLACEHOLDER');
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          product_data: { name: planData.name, description: planData.description },
-          unit_amount: planData.price,
-        },
-        quantity: 1,
-      }],
-      mode: 'payment',
-      customer_email: email || undefined,
-      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
-      cancel_url: `${baseUrl}/?cancelled=1`,
-      metadata: { mirrorSessionId: sessionId || '', plan, tier: planData.tier },
-      allow_promotion_codes: true,
-    });
+    let checkoutParams;
+
+    if (isSubscription && !isPlaceholderPrice) {
+      // Use pre-created Stripe Price ID for subscriptions
+      checkoutParams = {
+        payment_method_types: ['card'],
+        line_items: [{ price: planData.stripe_price_id, quantity: 1 }],
+        mode: 'subscription',
+        customer_email: email || undefined,
+        success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
+        cancel_url: `${baseUrl}/?cancelled=1`,
+        metadata: { mirrorSessionId: sessionId || '', plan, tier: planData.tier },
+        allow_promotion_codes: true,
+        subscription_data: { metadata: { mirrorSessionId: sessionId || '', plan, tier: planData.tier } },
+      };
+    } else {
+      // Fallback: use price_data (works for one-time and when Price IDs are placeholders)
+      checkoutParams = {
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: { name: planData.name, description: planData.description },
+            unit_amount: planData.price,
+            ...(isSubscription ? { recurring: { interval: planData.interval } } : {}),
+          },
+          quantity: 1,
+        }],
+        mode: isSubscription ? 'subscription' : 'payment',
+        customer_email: email || undefined,
+        success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
+        cancel_url: `${baseUrl}/?cancelled=1`,
+        metadata: { mirrorSessionId: sessionId || '', plan, tier: planData.tier },
+        allow_promotion_codes: true,
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(checkoutParams);
 
     // Record pending purchase in Supabase
     await supabase.from('mm_purchases').insert({
@@ -520,15 +639,37 @@ app.post('/api/webhook/stripe',
         .update({ status: 'completed', email: email || null })
         .eq('stripe_session_id', session.id);
 
+      // Update session tier in memory and Supabase
+      if (mirrorSessionId && tier) {
+        const existing = profiles.get(mirrorSessionId);
+        if (existing) {
+          existing.tier = tier;
+          profiles.set(mirrorSessionId, existing);
+        }
+        await upsertSession(mirrorSessionId, { tier, plan });
+      }
 
-      // Decrement spots
-      spotsRemaining = Math.max(0, spotsRemaining - 1);
+      // Decrement lifetime spots counter
+      if (!plan || plan === 'lifetime') {
+        spotsRemaining = Math.max(0, spotsRemaining - 1);
+      }
 
       // Send purchase confirmation email
       if (email) sendPurchaseEmail(email, plan, '').catch(() => {});
 
-      console.log(`[Stripe] Payment completed: ${plan} — ${email} — $${(session.amount_total / 100).toFixed(2)}`);
+      console.log(`[Stripe] Payment completed: ${plan} (${tier}) — ${email} — $${(session.amount_total / 100).toFixed(2)}`);
+    }
 
+    // Handle subscription cancellation
+    if (event.type === 'customer.subscription.deleted') {
+      const sub = event.data.object;
+      const { mirrorSessionId } = sub.metadata || {};
+      if (mirrorSessionId) {
+        const existing = profiles.get(mirrorSessionId);
+        if (existing) { existing.tier = 'free'; profiles.set(mirrorSessionId, existing); }
+        await upsertSession(mirrorSessionId, { tier: 'free', plan: null });
+        console.log(`[Stripe] Subscription cancelled for session: ${mirrorSessionId}`);
+      }
     }
 
     res.sendStatus(200);
@@ -687,8 +828,18 @@ async function sendPurchaseEmail(email, plan, name) {
   if (!RESEND_API_KEY) return;
   try {
     const resend = new Resend(RESEND_API_KEY);
-    const planNames = { starter: 'Starter', pro: 'Pro (1 Year)', lifetime: 'Lifetime' };
-    const planPrices = { starter: '$29', pro: '$79', lifetime: '$149' };
+    const planNames = {
+      core_monthly: 'Core', core_annual: 'Core (Annual)',
+      social_monthly: 'Social', social_annual: 'Social (Annual)',
+      deep_monthly: 'Deep', deep_annual: 'Deep (Annual)',
+      lifetime: 'Lifetime',
+    };
+    const planPrices = {
+      core_monthly: '$9.97/mo', core_annual: '$107.68/yr',
+      social_monthly: '$16.77/mo', social_annual: '$181.12/yr',
+      deep_monthly: '$27.97/mo', deep_annual: '$302.08/yr',
+      lifetime: '$349',
+    };
     await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
@@ -715,12 +866,100 @@ async function sendPurchaseEmail(email, plan, name) {
   } catch (e) { console.warn('[Email] Failed to send purchase email:', e.message); }
 }
 
+// ─── Voice Transcription ─────────────────────────────────────────────────────
+// Uses OpenAI Whisper API via the OPENAI_API_KEY env var.
+// If key is not set, returns a graceful error so the app still works.
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+const upload = multer({
+  dest: '/tmp/mirrormind-audio/',
+  limits: { fileSize: 16 * 1024 * 1024 }, // 16MB limit
+  fileFilter: (req, file, cb) => {
+    const allowed = ['audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/x-m4a'];
+    cb(null, allowed.includes(file.mimetype) || file.originalname.match(/\.(webm|mp4|mp3|wav|ogg|m4a)$/i));
+  },
+});
+
+app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
+  if (!OPENAI_API_KEY) {
+    // Clean up temp file if it exists
+    if (req.file) fs.unlink(req.file.path, () => {});
+    return res.status(503).json({
+      error: 'Voice transcription not configured.',
+      message: 'Add OPENAI_API_KEY to enable voice input.',
+      placeholder: true,
+    });
+  }
+  if (!req.file) return res.status(400).json({ error: 'No audio file provided.' });
+
+  const filePath = req.file.path;
+  try {
+    // Rename to add proper extension so Whisper recognises the format
+    const ext = req.file.originalname.split('.').pop() || 'webm';
+    const renamedPath = `${filePath}.${ext}`;
+    fs.renameSync(filePath, renamedPath);
+
+    // Call Whisper API
+    const formData = new FormData();
+    formData.append('file', new Blob([fs.readFileSync(renamedPath)], { type: req.file.mimetype }), `audio.${ext}`);
+    formData.append('model', 'whisper-1');
+    formData.append('language', 'en');
+
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+      body: formData,
+    });
+
+    fs.unlink(renamedPath, () => {}); // clean up
+
+    if (!response.ok) {
+      const err = await response.json();
+      return res.status(500).json({ error: err.error?.message || 'Transcription failed' });
+    }
+
+    const result = await response.json();
+    console.log(`[Voice] Transcribed ${req.file.size} bytes: "${result.text?.slice(0, 80)}..."`);
+    res.json({ text: result.text, language: result.language });
+  } catch (err) {
+    fs.unlink(filePath, () => {});
+    console.error('[Voice] Transcription error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get pricing info
 app.get('/api/pricing', (req, res) => {
   res.json({
-    plans: Object.entries(PLANS).map(([id, p]) => ({ id, ...p, priceFormatted: `$${(p.price / 100).toFixed(0)}` })),
+    plans: Object.entries(PLANS).map(([id, p]) => ({
+      id,
+      name: p.name,
+      price: p.price,
+      priceFormatted: p.billing === 'one_time'
+        ? `$${(p.price / 100).toFixed(0)}`
+        : `$${(p.price / 100).toFixed(2)}/${p.billing === 'annual' ? 'yr' : 'mo'}`,
+      description: p.description,
+      tier: p.tier,
+      billing: p.billing,
+      interval: p.interval,
+      surveyLimit: TIER_SURVEY_LIMITS[p.tier],
+      hasPlaceholderPriceId: p.stripe_price_id.startsWith('price_PLACEHOLDER'),
+    })),
+    tierLimits: TIER_SURVEY_LIMITS,
     spotsRemaining,
     stripeEnabled: !!STRIPE_SECRET_KEY,
+    stripeConfigured: !!STRIPE_SECRET_KEY,
+    // Env vars to set when Stripe keys are ready:
+    requiredEnvVars: [
+      'STRIPE_SECRET_KEY',
+      'STRIPE_WEBHOOK_SECRET',
+      'STRIPE_PRICE_CORE_MONTHLY',
+      'STRIPE_PRICE_CORE_ANNUAL',
+      'STRIPE_PRICE_SOCIAL_MONTHLY',
+      'STRIPE_PRICE_SOCIAL_ANNUAL',
+      'STRIPE_PRICE_DEEP_MONTHLY',
+      'STRIPE_PRICE_DEEP_ANNUAL',
+      'STRIPE_PRICE_LIFETIME',
+    ],
   });
 });
 

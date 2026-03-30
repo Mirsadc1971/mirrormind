@@ -33,10 +33,37 @@
 - [ ] Reddit posts (r/SaaS, r/Entrepreneur, r/yoga, r/selfimprovement)
 
 ## Supabase Persistence (mlsuttoccqcpjhvkfeuv)
-- [ ] Wire server.js to MirrorMind Supabase project
-- [ ] Persist waitlist email signups to mm_waitlist
-- [ ] Persist user sessions and answers to mm_sessions
-- [ ] Persist generated Mirror Reports to mm_reports
-- [ ] Persist decisions to mm_decisions
-- [ ] Persist friend survey tokens to mm_friend_surveys
+- [x] Wire server.js to MirrorMind Supabase project
+- [x] Persist waitlist email signups to mm_waitlist
+- [x] Persist user sessions and answers to mm_sessions
+- [x] Persist generated Mirror Reports to mm_reports
+- [x] Persist decisions to mm_decisions
+- [x] Persist friend survey tokens to mm_friend_surveys
 - [ ] Add 30-minute auto-sync GitHub Action
+
+## Phase 2 — Subscription Pricing + Voice + Landing Page
+
+### Landing Page (Rebuild)
+- [ ] Hero section — headline, subheadline, single CTA
+- [ ] Problem section — the blind spot story
+- [ ] How it works — 3 steps (intake, friends, report)
+- [ ] Report preview — sample friendMirror section
+- [ ] Pricing section — Free / Core / Social / Deep / Lifetime with monthly/annual toggle
+- [ ] Social proof / waitlist count
+- [ ] Footer
+
+### Stripe Subscriptions
+- [ ] Create Stripe products: Core monthly $9.97, Core annual $107.68, Social monthly $16.77, Social annual $181.12, Deep monthly $27.97, Deep annual $302.08, Lifetime $349
+- [ ] Add plan field to session (free / core / social / deep / lifetime)
+- [ ] Enforce friend survey limits by plan (0 / 1 / 3 / 5 / unlimited)
+- [ ] Stripe subscription checkout flow (monthly + annual)
+- [ ] Stripe webhook: handle subscription created, updated, cancelled
+- [ ] Show locked friendMirror teaser on free reports
+
+### Voice Input
+- [ ] Microphone button on each intake question
+- [ ] Record audio in browser (MediaRecorder API)
+- [ ] POST audio to /api/transcribe endpoint
+- [ ] Whisper transcription returns text, populates answer field
+- [ ] Voice input on AI Twin chat
+- [ ] Loading state while transcribing
