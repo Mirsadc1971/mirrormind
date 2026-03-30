@@ -1729,10 +1729,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ─── 404 handler for API routes ─────────────────────────────────────────────
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
-});
+// Note: Express 5 handles 404s via the global error handler above
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`MirrorMind running on port ${PORT}`));
