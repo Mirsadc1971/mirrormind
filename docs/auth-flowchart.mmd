@@ -1,0 +1,102 @@
+flowchart TD
+    classDef endpoint fill:#1e3a5f,stroke:#60a5fa,color:#e2e8f0,font-weight:bold
+    classDef frontend fill:#1a1a2e,stroke:#a78bfa,color:#e2e8f0
+    classDef decision fill:#2e1065,stroke:#c084fc,color:#e2e8f0
+    classDef success fill:#064e3b,stroke:#34d399,color:#e2e8f0
+    classDef error fill:#450a0a,stroke:#f87171,color:#e2e8f0
+    classDef email fill:#451a03,stroke:#fbbf24,color:#e2e8f0
+    classDef storage fill:#1e293b,stroke:#94a3b8,color:#e2e8f0
+    classDef supabase fill:#0f2027,stroke:#38bdf8,color:#e2e8f0
+
+    %% ─── ENTRY POINTS ───────────────────────────────────────────
+    A([User visits MirrorMind]):::frontend
+    B{Page load:\ntoken in URL?}:::decision
+
+    A --> B
+
+    %% ─── AUTO-VERIFY PATH (returning from email link) ──────────
+    B -- "Yes: ?token=&email=" --> C[Frontend extracts\ntoken + email\nfrom URL params]:::frontend
+    C --> D[POST /api/auth/verify\ntoken, email]:::endpoint
+
+    D --> E{Supabase lookup:\nmm_users WHERE\nemail + magic_token match?}:::supabase
+    E -- "No match" --> F[401: Invalid or\nexpired link]:::error
+    E -- "Match found" --> G{Token expired?\nexpires_at < now?}:::decision
+    G -- "Yes" --> H[401: Link expired.\nRequest a new one.]:::error
+    G -- "No" --> I[Clear magic_token\nfrom mm_users]:::supabase
+    I --> J[Generate 30-day\nsession token\ncrypto.randomBytes 32]:::frontend
+    J --> K[Store session token\nin mm_users.magic_token\nwith 30-day expiry]:::supabase
+    K --> L[Return: user object\n+ sessionToken]:::success
+    L --> M[Frontend stores:\nlocalStorage mm_session_token\nlocalStorage mm_user]:::storage
+    M --> N[Remove token params\nfrom URL]:::frontend
+    N --> O[Call loadAccountData]:::frontend
+
+    %% ─── NORMAL FLOW: No token in URL ───────────────────────────
+    B -- "No" --> P{localStorage:\nmm_session_token exists?}:::decision
+    P -- "Yes" --> Q[GET /api/auth/me\nAuthorization: Bearer token]:::endpoint
+    Q --> R{Supabase lookup:\nmm_users WHERE\nmagic_token = token}:::supabase
+    R -- "Not found" --> S[401: Invalid session\nClear localStorage]:::error
+    R -- "Found" --> T{Session expired?\nexpires_at < now?}:::decision
+    T -- "Yes" --> U[401: Session expired\nClear localStorage]:::error
+    T -- "No" --> V[Return: user object\nid, email, tier,\ncanonicalArchetype,\ncurrentPlanWeek]:::success
+    V --> W[Frontend hydrates\nAccount page +\nGrowth plan dashboard]:::frontend
+
+    P -- "No" --> X[User is anonymous\nSession-only mode\nno persistence]:::frontend
+
+    %% ─── REQUEST MAGIC LINK ─────────────────────────────────────
+    O --> AA
+    X --> AA([User opens Account page]):::frontend
+    AA --> AB[User enters email\nand clicks Send Link]:::frontend
+    AB --> AC[POST /api/auth/magic-link\nemail, origin]:::endpoint
+
+    AC --> AD[Generate token:\ncrypto.randomBytes 32\nExpiry: 30 minutes]:::frontend
+    AD --> AE[Supabase UPSERT mm_users:\nemail, magic_token, expires_at\nON CONFLICT email]:::supabase
+    AE --> AF{RESEND_API_KEY\nconfigured?}:::decision
+    AF -- "No" --> AG[Log token to console\nDev mode only]:::error
+    AF -- "Yes" --> AH[Build login URL:\norigin + /auth/verify\n?token=TOKEN&email=EMAIL]:::frontend
+    AH --> AI[Resend: send email\nSubject: Your MirrorMind login link\nCTA button with loginUrl]:::email
+    AI --> AJ[200: Magic link sent.\nCheck your email.]:::success
+    AJ --> AK[Frontend shows:\nCheck your email status]:::frontend
+
+    %% ─── EMAIL CLICK → VERIFY LOOP ─────────────────────────────
+    AI -.->|User clicks link| C
+
+    %% ─── LOGOUT ─────────────────────────────────────────────────
+    W --> LA([User clicks Logout]):::frontend
+    LA --> LB[POST /api/auth/logout\nAuthorization: Bearer token]:::endpoint
+    LB --> LC[Supabase UPDATE mm_users:\nmagic_token = null\nexpires_at = null]:::supabase
+    LC --> LD[Clear localStorage:\nmm_session_token\nmm_user]:::storage
+    LD --> LE[Redirect to\nscreen-landing]:::frontend
+
+    %% ─── POST-AUTH: ACCOUNT LINKING ─────────────────────────────
+    V --> BA{mm_users.canonical_archetype\nset?}:::decision
+    BA -- "No" --> BB[Link session profile\nto user record\nvia sessionId]:::supabase
+    BB --> BC[Update mm_users:\ncanonical_archetype,\ncurrent_plan_week,\nplan_start_date]:::supabase
+    BA -- "Yes" --> BD[Load mm_growth_plans\nfor this user]:::supabase
+    BC --> BD
+    BD --> BE{Active growth plan\nexists?}:::decision
+    BE -- "No" --> BF[Create mm_growth_plans row:\narchetype, plan_year=1,\nstart_date, current_week=1]:::supabase
+    BE -- "Yes" --> BG[Resume from\ncurrent_week]:::success
+    BF --> BG
+    BG --> BH[Growth Plan Dashboard\nshows correct week\nand archetype habit]:::frontend
+
+    %% ─── SESSION TOKEN LIFECYCLE ────────────────────────────────
+    subgraph TOKEN_LIFECYCLE ["Session Token Lifecycle"]
+        direction LR
+        TL1([Magic link\nverified]) --> TL2[Token issued\n30-day expiry]
+        TL2 --> TL3{Used within\n30 days?}
+        TL3 -- "Yes" --> TL4[Session active\nAll API calls\npass Bearer token]
+        TL3 -- "No" --> TL5[Token expired\nUser must\nrequest new link]
+        TL4 --> TL6{User logs out?}
+        TL6 -- "Yes" --> TL7[Token cleared\nfrom Supabase\n+ localStorage]
+        TL6 -- "No" --> TL4
+    end
+
+    %% ─── TIER ACCESS AFTER AUTH ─────────────────────────────────
+    subgraph TIER_ACCESS ["Tier-Gated Features After Auth"]
+        direction TB
+        TA1([Authenticated user]) --> TA2{tier?}
+        TA2 -- free --> TA3[Report only\nNo growth plan\nNo checkpoints]
+        TA2 -- core --> TA4[Report + Twin\nQ1 Growth Track\nQ1 Checkpoint]
+        TA2 -- social --> TA5[Report + Twin\nQ1+Q2 Growth Track\nQ1+Q2 Checkpoints]
+        TA2 -- deep --> TA6[Full 365-day plan\nAll 4 Checkpoints\nYear 2 Plan generation]
+    end
