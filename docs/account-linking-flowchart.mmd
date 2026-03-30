@@ -1,0 +1,117 @@
+flowchart TD
+    classDef trigger fill:#1e3a5f,stroke:#60a5fa,color:#e2e8f0,font-weight:bold
+    classDef decision fill:#2e1065,stroke:#c084fc,color:#e2e8f0
+    classDef supabase fill:#0f2027,stroke:#38bdf8,color:#e2e8f0
+    classDef action fill:#1a1a2e,stroke:#a78bfa,color:#e2e8f0
+    classDef success fill:#064e3b,stroke:#34d399,color:#e2e8f0
+    classDef warning fill:#451a03,stroke:#fbbf24,color:#e2e8f0
+    classDef output fill:#1e293b,stroke:#94a3b8,color:#e2e8f0
+
+    %% ─── ENTRY ──────────────────────────────────────────────────
+    START([Authenticated session established\nUser object returned from /api/auth/me\nor /api/auth/verify]):::trigger
+
+    START --> A{mm_users record:\ncanonical_archetype\nfield populated?}:::decision
+
+    %% ─── BRANCH A: ARCHETYPE NOT YET SET ────────────────────────
+    A -- "No — new user\nor pre-auth session" --> B[Query mm_sessions\nWHERE session_id =\ncurrent mirrorSessionId]:::supabase
+
+    B --> C{mm_sessions row\nfound?}:::decision
+
+    C -- "No — user never\ncompleted intake" --> D[Set state:\narchetype = null\nplan_week = null\nDashboard shows\nComplete Intake CTA]:::warning
+
+    C -- "Yes — intake\ncompleted in session" --> E[Extract from mm_sessions:\ncanonical_archetype\narchetype_tagline\nreport_data JSON\nsession_created_at]:::supabase
+
+    E --> F[UPDATE mm_users SET:\ncanonical_archetype\narchetype_tagline\nplan_start_date = session_created_at\ncurrent_plan_week = 1\nupdated_at = now]:::supabase
+
+    F --> G[Link session to user:\nUPDATE mm_sessions SET\nuser_id = mm_users.id\nWHERE session_id = current]:::supabase
+
+    G --> H[Migrate mm_reports:\nUPDATE mm_reports SET\nuser_id = mm_users.id\nWHERE session_id = current]:::supabase
+
+    H --> I[Migrate mm_decisions:\nUPDATE mm_decisions SET\nuser_id = mm_users.id\nWHERE session_id = current]:::supabase
+
+    I --> J[Migrate mm_friend_surveys:\nUPDATE mm_friend_surveys SET\nuser_id = mm_users.id\nWHERE session_id = current]:::supabase
+
+    J --> K{mm_users.tier\ngrants growth plan\naccess?}:::decision
+
+    K -- "free — no plan access" --> L[Set state:\ngrowth_plan = null\nShow upgrade prompt\nin dashboard]:::warning
+
+    K -- "core / social / deep" --> M[Proceed to\ngrowth plan creation]:::action
+
+    %% ─── BRANCH B: ARCHETYPE ALREADY SET ────────────────────────
+    A -- "Yes — returning\nauthenticated user" --> N[Read mm_users fields:\ncanonical_archetype\ncurrent_plan_week\nplan_start_date\ntier]:::supabase
+
+    N --> O[Query mm_growth_plans\nWHERE user_id = mm_users.id\nAND plan_year = 1\nAND is_active = true]:::supabase
+
+    O --> P{Active growth\nplan row found?}:::decision
+
+    %% ─── NO ACTIVE PLAN: CREATE ─────────────────────────────────
+    P -- "No" --> M
+
+    M --> Q[INSERT mm_growth_plans:\nuser_id\narchetype = canonical_archetype\nplan_year = 1\nstart_date = plan_start_date\ncurrent_week = 1\ncurrent_quarter = 1\nis_active = true\ncreated_at = now]:::supabase
+
+    Q --> R[Set quarter theme:\nweek 1-13 → Q1 Awareness\nweek 14-26 → Q2 Disruption\nweek 27-39 → Q3 Integration\nweek 40-52 → Q4 Expansion]:::action
+
+    R --> S[Fetch Week 1 habit\nfrom weekly summary file\ndocs/weekly-summaries/\nfor this archetype]:::action
+
+    S --> T{Week 1 is a\ncheckpoint week?\nweeks 13, 26, 39, 52}:::decision
+    T -- "No" --> U[Render Growth Plan\nDashboard:\nWeek badge, quarter bar,\nhabit card, check-in form]:::success
+    T -- "Yes" --> V[Render Checkpoint\nnotice above habit card\nwith Q Integration\nCheckpoint prompt]:::success
+
+    %% ─── ACTIVE PLAN: RESUME ────────────────────────────────────
+    P -- "Yes" --> W[Read mm_growth_plans:\ncurrent_week\ncurrent_quarter\nlast_checkin_at\nforward_commitment]:::supabase
+
+    W --> X{current_week\nadvanced since\nlast_checkin_at?}:::decision
+
+    X -- "No — same week,\ncheckin already done" --> Y[Show completed\ncheck-in state:\nTwin response displayed\nNext week countdown]:::output
+
+    X -- "Yes — new week\nor first visit" --> Z{Check tier vs\ncurrent_week access}:::decision
+
+    Z -- "Week within\ntier access range" --> AA[Fetch this week's habit\nfrom weekly summary\nfor canonical_archetype]:::action
+
+    Z -- "Week exceeds\ntier access\ne.g. Core user at week 14+" --> AB[Show tier gate:\nUpgrade to Social\nor Deep to continue\nyour plan]:::warning
+
+    AA --> AC{Is current_week\na checkpoint week?\n13, 26, 39, 52}:::decision
+
+    AC -- "No — regular week" --> AD[Render habit card\n+ check-in form\nwith 3 questions]:::success
+
+    AC -- "Yes — checkpoint week" --> AE{Check tier allows\nthis checkpoint?\nCore: Q1 only\nSocial: Q1+Q2\nDeep: all 4}:::decision
+
+    AE -- "Tier allows" --> AF[Render Q Integration\nCheckpoint UI:\nCheckpoint badge\n4 structured questions\nPrevious commitment\nrecalled from\nmm_forward_commitments]:::success
+
+    AE -- "Tier blocked" --> AG[Show checkpoint\nupgrade prompt:\nThis checkpoint requires\nSocial or Deep tier]:::warning
+
+    %% ─── FORWARD COMMITMENT RECALL ──────────────────────────────
+    AF --> AH[Query mm_forward_commitments\nWHERE user_id = mm_users.id\nORDER BY created_at DESC\nLIMIT 1]:::supabase
+
+    AH --> AI{Previous commitment\nfound?}:::decision
+
+    AI -- "Yes" --> AJ[Display at top of\ncheckpoint form:\nAt your last checkpoint\nyou committed to:\nprevious_commitment_text]:::output
+
+    AI -- "No — first checkpoint" --> AK[No recall shown.\nCheckpoint opens fresh.]:::output
+
+    AJ --> AL([User completes\ncheckpoint form]):::trigger
+    AK --> AL
+
+    AL --> AM[POST /api/checkpoint\nwith 4 responses +\nforward_commitment]:::action
+
+    AM --> AN[INSERT mm_checkpoints row\nINSERT mm_forward_commitments row\nUPDATE mm_growth_plans\ncurrent_week + 1]:::supabase
+
+    AN --> AO{Week 52?\nYear-end review}:::decision
+
+    AO -- "No" --> U
+    AO -- "Yes — Deep tier only" --> AP[Trigger Year 2\nPlan generation\nPOST /api/year2-plan]:::trigger
+
+    AP --> AQ[INSERT mm_growth_plans\nplan_year = 2\narchetype = updated_archetype\ncurrent_week = 1\nis_active = true\nDeactivate plan_year = 1]:::supabase
+
+    AQ --> AR([Year 2 Plan Dashboard\nloaded with new\narchetype + week 1 habit]):::success
+
+    %% ─── SUPABASE TABLE REFERENCE ───────────────────────────────
+    subgraph TABLES ["Supabase Tables Involved"]
+        direction LR
+        T1[mm_users\nid, email, tier,\ncanonical_archetype,\ncurrent_plan_week,\nplan_start_date]
+        T2[mm_sessions\nsession_id, user_id,\narchetype, report_data]
+        T3[mm_growth_plans\nuser_id, plan_year,\narchetype, current_week,\ncurrent_quarter, is_active]
+        T4[mm_checkins\nuser_id, plan_week,\nq1, q2, q3,\ntwin_response]
+        T5[mm_checkpoints\nuser_id, quarter,\nresponses JSON,\ntwin_synthesis JSON]
+        T6[mm_forward_commitments\nuser_id, checkpoint_quarter,\ncommitment_text,\ncreated_at]
+    end
