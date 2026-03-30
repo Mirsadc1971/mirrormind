@@ -160,6 +160,34 @@ app.post('/api/report', async (req, res) => {
   if (!session?.profile) return res.status(400).json({ error: 'No profile found. Complete intake first.' });
 
   const p = session.profile;
+
+  // Collect all completed friend surveys for this session
+  const surveyIds = profiles.get(`surveys_for_${sessionId}`) || [];
+  const completedSurveys = surveyIds
+    .map(id => profiles.get(`survey_${id}`))
+    .filter(s => s && s.completedAt && s.responses.length > 0);
+
+  const hasFriendData = completedSurveys.length > 0;
+
+  // Build the friend data block to inject into the prompt
+  const friendDataBlock = hasFriendData
+    ? completedSurveys.map((s, i) => {
+        const lines = s.questions.map((q, qi) =>
+          `  Q: ${q}\n  A: ${s.responses[qi] || '(no answer)'}`
+        ).join('\n');
+        return `Friend ${i + 1}:\n${lines}` +
+          (s.gapAnalysis ? `\n  Gap Analysis: ${s.gapAnalysis}` : '');
+      }).join('\n\n')
+    : null;
+
+  const friendSection = hasFriendData
+    ? `\n\nFRIEND SURVEY DATA (${completedSurveys.length} friend${completedSurveys.length > 1 ? 's' : ''} responded):\n${friendDataBlock}\n\nIMPORTANT: The friend survey data above is external evidence — real observations from people who know this person. Use it to write the "friendMirror" section. Directly contrast what the person believes about themselves with what their friends actually observe. Quote or closely paraphrase the friend responses. Name the gap explicitly and with compassion.`
+    : '';
+
+  const friendMirrorField = hasFriendData
+    ? `,\n  "friendMirror": "2-3 paragraphs. Paragraph 1: what the friends observed (quote them directly). Paragraph 2: contrast this with how the person sees themselves — name the gap without softening it. Paragraph 3: one sentence on what becomes possible when this gap closes."`
+    : '';
+
   const reportPrompt = `You are writing a Mirror Report — a deeply personal psychological document that feels like it was written by someone who has known this person for years.
 
 PROFILE DATA:
@@ -170,7 +198,7 @@ Core Values: ${p.coreValues.join(', ')}
 Self-Deception: ${p.selfDeception}
 Superpower: ${p.superpower}
 Kryptonite: ${p.kryptonite}
-Shadow Self: ${p.shadowSelf}
+Shadow Self: ${p.shadowSelf}${friendSection}
 
 Write a Mirror Report with these sections. Be specific, provocative, and accurate. No generic platitudes. Write as if you know them personally.
 
@@ -182,7 +210,7 @@ Return JSON with EXACTLY this structure:
   "shadowNarrative": "A paragraph about their shadow patterns — the things they do that undermine them, written with compassion but unflinching honesty",
   "blindSpotDeepDive": "Pick their most significant blind spot and write 2 paragraphs going deep on it",
   "theThingYoureAvoiding": "A direct 2-3 sentence statement about the thing they are currently avoiding in their life",
-  "yourNextChapter": "A forward-looking paragraph about what becomes possible when they face their shadow",
+  "yourNextChapter": "A forward-looking paragraph about what becomes possible when they face their shadow"${friendMirrorField},
   "shareableQuote": "A single powerful sentence from the report that they would want to share on social media — make it profound and personal"
 }`;
 
@@ -266,6 +294,10 @@ app.post('/api/friend-survey', async (req, res) => {
       `If you had to describe them in 3 words, what would they be?`,
     ],
   };
+  // Register this survey under the session so the report can find it
+  const sessionSurveys = profiles.get(`surveys_for_${sessionId}`) || [];
+  sessionSurveys.push(surveyId);
+  profiles.set(`surveys_for_${sessionId}`, sessionSurveys);
   profiles.set(`survey_${surveyId}`, survey);
   res.json({ surveyId, questions: survey.questions });
 });
@@ -278,6 +310,7 @@ app.post('/api/friend-survey/:surveyId', async (req, res) => {
   if (!survey) return res.status(404).json({ error: 'Survey not found' });
 
   survey.responses.push(...responses);
+  survey.completedAt = Date.now();
   profiles.set(`survey_${surveyId}`, survey);
 
   // Generate gap analysis
@@ -291,6 +324,9 @@ Write a brief "Mirror Gap Analysis" — 2-3 sentences about the gap between how 
 
   try {
     const gapAnalysis = await callLLM([{ role: 'user', content: gapPrompt }], { maxTokens: 300 });
+    // Store gap analysis on the survey so the report can access it
+    survey.gapAnalysis = gapAnalysis;
+    profiles.set(`survey_${surveyId}`, survey);
     res.json({ gapAnalysis, profile: p });
   } catch (err) {
     res.status(500).json({ error: err.message });
