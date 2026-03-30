@@ -461,11 +461,10 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 
 // Friend survey limits per tier
 const TIER_SURVEY_LIMITS = {
-  free:     0,
-  core:     1,
-  social:   3,
-  deep:     5,
-  lifetime: Infinity,
+  free:   0,
+  core:   1,
+  social: 3,
+  deep:   5,
 };
 
 const PLANS = {
@@ -498,11 +497,11 @@ const PLANS = {
     interval: 'month',
     stripe_price_id: process.env.STRIPE_PRICE_DEEP_MONTHLY || 'price_PLACEHOLDER_deep_monthly',
   },
-  // ── Annual subscriptions (10% off) ────────────────────────────────────────
+  // ── Annual subscriptions (2 months free = ~17% off) ─────────────────────
   core_annual: {
     name: 'MirrorMind Core (Annual)',
-    price: 10768,         // $107.68/year
-    description: 'Full Mirror Report + 1 friend survey/month + AI Twin — billed annually',
+    price: 9997,          // $99.97/year — save 2 months
+    description: 'Full Mirror Report + 1 friend survey/month + AI Twin — billed annually, save 2 months',
     tier: 'core',
     billing: 'annual',
     interval: 'year',
@@ -510,8 +509,8 @@ const PLANS = {
   },
   social_annual: {
     name: 'MirrorMind Social (Annual)',
-    price: 18112,         // $181.12/year
-    description: 'Full Mirror Report + 3 friend surveys/month + AI Twin + Decision Tracker — billed annually',
+    price: 16770,         // $167.70/year — save 2 months
+    description: 'Full Mirror Report + 3 friend surveys/month + AI Twin + Decision Tracker — billed annually, save 2 months',
     tier: 'social',
     billing: 'annual',
     interval: 'year',
@@ -519,22 +518,12 @@ const PLANS = {
   },
   deep_annual: {
     name: 'MirrorMind Deep (Annual)',
-    price: 30208,         // $302.08/year
-    description: 'Full Mirror Report + 5 friend surveys/month + AI Twin + Decision Tracker + Voice Input — billed annually',
+    price: 27970,         // $279.70/year — save 2 months
+    description: 'Full Mirror Report + 5 friend surveys/month + AI Twin + Decision Tracker + Voice Input — billed annually, save 2 months',
     tier: 'deep',
     billing: 'annual',
     interval: 'year',
     stripe_price_id: process.env.STRIPE_PRICE_DEEP_ANNUAL || 'price_PLACEHOLDER_deep_annual',
-  },
-  // ── Lifetime (one-time) ────────────────────────────────────────────────────
-  lifetime: {
-    name: 'MirrorMind Lifetime',
-    price: 34900,         // $349 one-time
-    description: 'Unlimited friend surveys + everything forever + all future features',
-    tier: 'lifetime',
-    billing: 'one_time',
-    interval: null,
-    stripe_price_id: process.env.STRIPE_PRICE_LIFETIME || 'price_PLACEHOLDER_lifetime',
   },
 };
 
@@ -647,11 +636,6 @@ app.post('/api/webhook/stripe',
           profiles.set(mirrorSessionId, existing);
         }
         await upsertSession(mirrorSessionId, { tier, plan });
-      }
-
-      // Decrement lifetime spots counter
-      if (!plan || plan === 'lifetime') {
-        spotsRemaining = Math.max(0, spotsRemaining - 1);
       }
 
       // Send purchase confirmation email
@@ -832,13 +816,11 @@ async function sendPurchaseEmail(email, plan, name) {
       core_monthly: 'Core', core_annual: 'Core (Annual)',
       social_monthly: 'Social', social_annual: 'Social (Annual)',
       deep_monthly: 'Deep', deep_annual: 'Deep (Annual)',
-      lifetime: 'Lifetime',
     };
     const planPrices = {
-      core_monthly: '$9.97/mo', core_annual: '$107.68/yr',
-      social_monthly: '$16.77/mo', social_annual: '$181.12/yr',
-      deep_monthly: '$27.97/mo', deep_annual: '$302.08/yr',
-      lifetime: '$349',
+      core_monthly: '$9.97/mo', core_annual: '$99.97/yr',
+      social_monthly: '$16.77/mo', social_annual: '$167.70/yr',
+      deep_monthly: '$27.97/mo', deep_annual: '$279.97/yr',
     };
     await resend.emails.send({
       from: FROM_EMAIL,
@@ -958,9 +940,83 @@ app.get('/api/pricing', (req, res) => {
       'STRIPE_PRICE_SOCIAL_ANNUAL',
       'STRIPE_PRICE_DEEP_MONTHLY',
       'STRIPE_PRICE_DEEP_ANNUAL',
-      'STRIPE_PRICE_LIFETIME',
     ],
   });
+});
+
+// ─── Route aliases for frontend API calls ───────────────────────────────────
+// /api/generate-report: runs intake + report in one shot (answers array sent directly)
+app.post('/api/generate-report', async (req, res) => {
+  const { answers } = req.body;
+  if (!answers?.length) return res.status(400).json({ error: 'Missing answers' });
+
+  // Create a temporary session
+  const sessionId = crypto.randomUUID();
+  profiles.set(sessionId, { answers: [], profile: null, report: null, createdAt: Date.now() });
+
+  // Build intake answers
+  const formattedAnswers = answers.map((a, i) => `Q${i + 1}: ${a.question || a}\nAnswer: ${a.answer || a}`).join('\n\n');
+  const profilePrompt = `You are a world-class psychologist and behavioral scientist. Analyze these intake answers and build a precise psychological profile.\n\nINTAKE ANSWERS:\n${formattedAnswers}\n\nReturn a JSON object with EXACTLY this structure (no markdown, pure JSON):\n{\n  "archetype": "2-3 word archetype label (e.g. 'The Reluctant Visionary')",\n  "archetypeDescription": "1 sentence describing this archetype",\n  "tagline": "One sentence that captures their essence — should make them feel seen",\n  "communicationStyle": "one of: Direct, Diplomatic, Analytical, Expressive",\n  "decisionStyle": "one of: Intuitive, Deliberate, Collaborative, Impulsive",\n  "coreValues": ["value1", "value2", "value3"],\n  "traits": [{"name": "trait name", "score": 75}, {"name": "trait name", "score": 60}, {"name": "trait name", "score": 85}, {"name": "trait name", "score": 45}, {"name": "trait name", "score": 70}, {"name": "trait name", "score": 55}],\n  "selfDeception": "The one thing this person is currently lying to themselves about (1 sentence)",\n  "superpower": "Their single greatest natural strength (1 sentence)",\n  "kryptonite": "The pattern that most consistently undermines them (1 sentence)",\n  "shadowSelf": "The version of themselves they most fear becoming (1 sentence)",\n  "strength": "Their core strength in 1-2 sentences",\n  "blind_spot": "Their key blind spot in 1-2 sentences",\n  "shadow": "Their shadow pattern in 1-2 sentences",\n  "avoiding": "The thing they are currently avoiding (1-2 direct sentences)",\n  "quote": "A single powerful sentence that captures their psychology — something they would share"\n}`;
+
+  try {
+    const raw = await callLLM([{ role: 'user', content: profilePrompt }], { maxTokens: 1500 });
+    const profile = JSON.parse(raw.trim().replace(/^```json\n?/, '').replace(/\n?```$/, ''));
+    const session = profiles.get(sessionId);
+    session.answers = answers;
+    session.profile = profile;
+    profiles.set(sessionId, session);
+    // Return the data in the shape renderReport() expects
+    res.json({
+      sessionId,
+      archetype: profile.archetype,
+      tagline: profile.tagline || profile.archetypeDescription,
+      traits: profile.traits || [],
+      strength: profile.strength || profile.superpower,
+      blind_spot: profile.blind_spot || profile.kryptonite,
+      shadow: profile.shadow || profile.shadowSelf,
+      avoiding: profile.avoiding || profile.selfDeception,
+      quote: profile.quote,
+      tier: 'free',
+    });
+  } catch (err) {
+    console.error('Generate-report error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// /api/twin-chat: alias for /api/chat — accepts {message, profile} directly
+app.post('/api/twin-chat', async (req, res) => {
+  const { message, profile } = req.body;
+  if (!message || !profile) return res.status(400).json({ error: 'Missing message or profile' });
+
+  const p = profile;
+  const systemPrompt = `You are ${p.archetype} — the AI twin of the person you're speaking with. You know them deeply.\n\nTHEIR PSYCHOLOGICAL PROFILE:\n- Archetype: ${p.archetype}\n- Superpower: ${p.superpower || p.strength}\n- Kryptonite: ${p.kryptonite || p.blind_spot}\n- Shadow: ${p.shadowSelf || p.shadow}\n- Avoiding: ${p.selfDeception || p.avoiding}\n\nYou respond as someone who knows them better than they know themselves. Be warm but honest. Be direct but not harsh.`;
+
+  try {
+    const reply = await callLLM([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: message },
+    ], { maxTokens: 800 });
+    res.json({ reply });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// /api/decision-predict: alias for /api/decision — accepts {decision, context, profile} directly
+app.post('/api/decision-predict', async (req, res) => {
+  const { decision, context, profile } = req.body;
+  if (!decision || !profile) return res.status(400).json({ error: 'Missing decision or profile' });
+
+  const p = profile;
+  const predictionPrompt = `Person profile: ${p.archetype}, Decision Style: ${p.decisionStyle || 'Deliberate'}, Kryptonite: ${p.kryptonite || p.blind_spot}\n\nThey are deciding: "${decision}"${context ? `\nContext: ${context}` : ''}\n\nPredict in 2 sentences: (1) what they will likely decide and why based on their patterns, and (2) how they will feel about this decision in 6 months. Be specific. Return plain text only.`;
+
+  try {
+    const prediction = await callLLM([{ role: 'user', content: predictionPrompt }], { maxTokens: 200 });
+    res.json({ prediction });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Serve the frontend for all other routes
