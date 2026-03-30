@@ -1,0 +1,128 @@
+flowchart TD
+    %% ── Legend ───────────────────────────────────────────────────────────
+    subgraph LEGEND["  Legend  "]
+        direction LR
+        L1([Immediate Action])
+        L2[P0 · Critical Blocker]
+        L3[P1 · High Priority]
+        L4[P2 · Medium Priority]
+        L5[P3 · Standard]
+        L6[P4 · Low Priority]
+        L7[P5 · Future]
+    end
+
+    %% ── Three Immediate Actions ──────────────────────────────────────────
+    A1([ACTION 1\nCanonicalise the Archetype\n2 hours · server.js only])
+    A2([ACTION 2\nCreate Supabase Growth Plan Tables\n3 hours · SQL schema])
+    A3([ACTION 3\nBuild Growth Plan Dashboard UI\n1-2 days · frontend])
+
+    %% ── P0 Gaps ──────────────────────────────────────────────────────────
+    G1[GAP 1 · P0\nArchetype Canonicalisation\nFree-form LLM archetypes not\nmapped to canonical 8]
+    G3[GAP 3 · P0\nUser Authentication\nNo accounts · session-only\nno cross-device persistence]
+
+    %% ── P1 Gaps ──────────────────────────────────────────────────────────
+    G8[GAP 8 · P1\nSupabase Growth Plan Schema\nmm_growth_plans · mm_checkins\nmm_checkpoints · mm_forward_commitments]
+    G2[GAP 2 · P1\nGrowth Plan Dashboard UI\nNo page shows current week\nhabit or progress]
+    G4[GAP 4 · P1\nWeekly Check-In Delivery\nNo system to send habits\nor receive responses]
+
+    %% ── P2 Gaps ──────────────────────────────────────────────────────────
+    G5[GAP 5 · P2\nQ Integration Checkpoint\nFully designed but does\nnot exist in the product]
+    G6[GAP 6 · P2\nArchetype-Specific Twin Tone\nSingle generic prompt\nfor all archetypes]
+    G9[GAP 9 · P2\nGrowth Plan Email Sequences\nNo weekly habit emails\nor checkpoint reminders]
+
+    %% ── P3 Gaps ──────────────────────────────────────────────────────────
+    G7[GAP 7 · P3\nVoice Input\nTranscribe endpoint exists\nno mic button in UI]
+    G10[GAP 10 · P3\nReport Archetype CSS Theming\nAll archetypes use\nsame visual identity]
+    G14[GAP 14 · P3\nAccount Management UI\nNo cancel or subscription\nmanagement page]
+
+    %% ── P4 Gaps ──────────────────────────────────────────────────────────
+    G12[GAP 12 · P4\nProduct Hunt and AppSumo Assets\nLaunch copy not written]
+    G13[GAP 13 · P4\nSupabase Auto-Sync GitHub Action\nListed in todo.md\nnot built]
+
+    %% ── P5 Gap ───────────────────────────────────────────────────────────
+    G11[GAP 11 · P5\nYear 2 Plan Generation Logic\nFully specified\nrequires 52 weeks of data]
+
+    %% ── Immediate Actions map to Gaps ────────────────────────────────────
+    A1 --> G1
+    A2 --> G8
+    A3 --> G2
+
+    %% ── P0 dependency chains ─────────────────────────────────────────────
+    G1 -->|"Canonical archetype required\nto route growth plan"| G2
+    G1 -->|"Archetype needed for\nTwin tone selection"| G6
+    G1 -->|"Canonical archetype needed\nfor CSS theme routing"| G10
+    G1 -->|"Archetype field needed\nin growth plan table"| G8
+
+    G3 -->|"User ID required to\ntrack plan progress"| G8
+    G3 -->|"Login required to\nshow personalised dashboard"| G2
+    G3 -->|"User account needed\nto send weekly emails"| G4
+    G3 -->|"User account needed\nfor subscription management"| G14
+
+    %% ── P1 dependency chains ─────────────────────────────────────────────
+    G8 -->|"Tables required to\nstore check-in data"| G4
+    G8 -->|"Tables required to\nstore checkpoint responses"| G5
+    G8 -->|"Tables required to\nshow dashboard data"| G2
+
+    G2 -->|"Dashboard needed to\ndisplay check-in UI"| G4
+
+    G4 -->|"Check-in data required\nfor checkpoint assessment"| G5
+    G4 -->|"Weekly delivery system\nneeded for habit emails"| G9
+
+    %% ── P2 dependency chains ─────────────────────────────────────────────
+    G5 -->|"Checkpoint responses\nrequired for Year 2 synthesis"| G11
+
+    G9 -->|"Email system needed\nfor checkpoint reminders"| G5
+
+    %% ── P3 dependency chains ─────────────────────────────────────────────
+    G6 -->|"Archetype tone improves\nTwin checkpoint experience"| G5
+
+    %% ── Independent items (no blockers) ─────────────────────────────────
+    G7 -.->|"Independent — can be\nbuilt any time"| G4
+    G12 -.->|"Independent — can be\nwritten any time"| G12
+    G13 -.->|"Independent — can be\nbuilt any time"| G13
+
+    %% ── Critical Path highlight ──────────────────────────────────────────
+    subgraph CRITICAL_PATH["  Critical Path  "]
+        direction LR
+        CP1["A1 · Canonicalise Archetype"]
+        CP2["A2 · Supabase Schema"]
+        CP3["G3 · User Auth"]
+        CP4["A3 · Dashboard UI"]
+        CP5["G4 · Weekly Check-In"]
+        CP6["G5 · Q Checkpoint"]
+        CP7["G11 · Year 2 Plan"]
+        CP1 --> CP2 --> CP3 --> CP4 --> CP5 --> CP6 --> CP7
+    end
+
+    %% ── Styling ──────────────────────────────────────────────────────────
+    classDef action fill:#1e1b4b,stroke:#7C3AED,color:#f0abfc,stroke-width:3px
+    classDef p0 fill:#450a0a,stroke:#dc2626,color:#fca5a5,stroke-width:2px
+    classDef p1 fill:#431407,stroke:#ea580c,color:#fed7aa,stroke-width:1.5px
+    classDef p2 fill:#14213d,stroke:#4F46E5,color:#a5b4fc,stroke-width:1.5px
+    classDef p3 fill:#1c1917,stroke:#78716c,color:#d6d3d1,stroke-width:1px
+    classDef p4 fill:#0f172a,stroke:#334155,color:#94a3b8,stroke-width:1px
+    classDef p5 fill:#052e16,stroke:#16a34a,color:#86efac,stroke-width:1px
+    classDef legend_action fill:#1e1b4b,stroke:#7C3AED,color:#f0abfc,stroke-width:2px
+    classDef legend_p0 fill:#450a0a,stroke:#dc2626,color:#fca5a5,stroke-width:1px
+    classDef legend_p1 fill:#431407,stroke:#ea580c,color:#fed7aa,stroke-width:1px
+    classDef legend_p2 fill:#14213d,stroke:#4F46E5,color:#a5b4fc,stroke-width:1px
+    classDef legend_p3 fill:#1c1917,stroke:#78716c,color:#d6d3d1,stroke-width:1px
+    classDef legend_p4 fill:#0f172a,stroke:#334155,color:#94a3b8,stroke-width:1px
+    classDef legend_p5 fill:#052e16,stroke:#16a34a,color:#86efac,stroke-width:1px
+    classDef cp fill:#0f172a,stroke:#7C3AED,color:#ddd6fe,stroke-width:1px
+
+    class A1,A2,A3 action
+    class G1,G3 p0
+    class G8,G2,G4 p1
+    class G5,G6,G9 p2
+    class G7,G10,G14 p3
+    class G12,G13 p4
+    class G11 p5
+    class L1 legend_action
+    class L2 legend_p0
+    class L3 legend_p1
+    class L4 legend_p2
+    class L5 legend_p3
+    class L6 legend_p4
+    class L7 legend_p5
+    class CP1,CP2,CP3,CP4,CP5,CP6,CP7 cp
