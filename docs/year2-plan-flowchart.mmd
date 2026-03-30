@@ -1,0 +1,184 @@
+flowchart TD
+    classDef trigger fill:#1e3a5f,stroke:#60a5fa,color:#e2e8f0,font-weight:bold
+    classDef decision fill:#2e1065,stroke:#c084fc,color:#e2e8f0
+    classDef supabase fill:#0f2027,stroke:#38bdf8,color:#e2e8f0
+    classDef synthesis fill:#1a1a2e,stroke:#a78bfa,color:#e2e8f0
+    classDef theme_exp fill:#064e3b,stroke:#34d399,color:#e2e8f0
+    classDef theme_deep fill:#1e3a5f,stroke:#60a5fa,color:#e2e8f0
+    classDef theme_recal fill:#451a03,stroke:#fbbf24,color:#e2e8f0
+    classDef theme_ext fill:#2e1065,stroke:#c084fc,color:#e2e8f0
+    classDef output fill:#1e293b,stroke:#94a3b8,color:#e2e8f0
+    classDef error fill:#450a0a,stroke:#f87171,color:#e2e8f0
+    classDef llm fill:#431407,stroke:#fb923c,color:#e2e8f0
+
+    %% ─── TRIGGERS ───────────────────────────────────────────────
+    T1([Trigger A:\nUser submits Week 52\ncheckpoint via\nPOST /api/checkpoint]):::trigger
+    T2([Trigger B:\nManual call\nPOST /api/year2-plan\nby authenticated user]):::trigger
+    T3([Trigger C:\nScheduled job\nweekly_growth_summary.py\ndetects week = 52]):::trigger
+
+    T1 & T2 & T3 --> GATE
+
+    %% ─── TIER GATE ──────────────────────────────────────────────
+    GATE{Tier check:\nuser.tier = deep?}:::decision
+    GATE -- "No — core or social" --> GATE_FAIL[403: Year 2 Plan\nrequires Deep tier.\nShow upgrade prompt.]:::error
+    GATE -- "Yes" --> GATE_PASS[Proceed to\ndata collection]:::synthesis
+
+    %% ─── DATA COLLECTION: SIX INPUTS ───────────────────────────
+    GATE_PASS --> DC1[Input 1 — 52 Weekly Check-Ins\nSELECT * FROM mm_checkins\nWHERE user_id ORDER BY plan_week\nFields: q1, q2, q3, twin_response]:::supabase
+
+    GATE_PASS --> DC2[Input 2 — 4 Checkpoint Reviews\nSELECT * FROM mm_checkpoints\nWHERE user_id ORDER BY quarter\nFields: responses JSON,\ntwin_synthesis JSON]:::supabase
+
+    GATE_PASS --> DC3[Input 3 — 4 Forward Commitments\nSELECT * FROM mm_forward_commitments\nWHERE user_id ORDER BY created_at\nFields: commitment_text,\ncheckpoint_quarter]:::supabase
+
+    GATE_PASS --> DC4[Input 4 — Year-End Reflection\nExtracted from mm_checkpoints\nWHERE quarter = 4\nFields: what_changed,\nwhat_avoided, what_noticed,\nforward_commitment]:::supabase
+
+    GATE_PASS --> DC5[Input 5 — External Validation\nExtracted from mm_checkpoints\nWHERE quarter = 4\nFields: external_responses\nfrom 3 named people]:::supabase
+
+    GATE_PASS --> DC6[Input 6 — Archetype Stability\nSELECT canonical_archetype,\narchetype_history JSON\nFROM mm_users\nTracks any mid-year revisions]:::supabase
+
+    DC1 & DC2 & DC3 & DC4 & DC5 & DC6 --> SYNTH_START
+
+    %% ─── TWIN SYNTHESIS: STEP 1 ─────────────────────────────────
+    SYNTH_START([All six inputs\ncollected and\npassed to LLM]):::trigger
+
+    SYNTH_START --> S1[STEP 1 — Growth Domain Mapping\nInputs: check-ins, checkpoints,\nforward commitments\nAssign each of 5 domains a status:]:::synthesis
+
+    S1 --> S1A{Self-Awareness\ndomain status}:::decision
+    S1A -- "Integrated" --> S1A1[Do not revisit\nin Year 2]:::theme_exp
+    S1A -- "Active" --> S1A2[Deepen difficulty\nin Year 2]:::theme_deep
+    S1A -- "Resistant" --> S1A3[Directly confront\nin Q1 Year 2]:::error
+    S1A -- "Untouched" --> S1A4[Sequence into\nQ3 or Q4]:::theme_recal
+
+    S1 --> S1B{Relational Behaviour\ndomain status}:::decision
+    S1B -- "Integrated" --> S1B1[Remove from plan]:::theme_exp
+    S1B -- "Active" --> S1B2[Escalate to\nharder relationships]:::theme_deep
+    S1B -- "Resistant" --> S1B3[Priority in\nQ1 Year 2]:::error
+    S1B -- "Untouched" --> S1B4[Introduce in Q2]:::theme_recal
+
+    S1 --> S1C{Professional Conduct\ndomain status}:::decision
+    S1C -- "Integrated" --> S1C1[Remove from plan]:::theme_exp
+    S1C -- "Active" --> S1C2[Deepen scope]:::theme_deep
+    S1C -- "Resistant" --> S1C3[Confront in Q2]:::error
+    S1C -- "Untouched" --> S1C4[Introduce in Q3]:::theme_recal
+
+    S1 --> S1D{Internal Regulation\ndomain status}:::decision
+    S1D -- "Integrated" --> S1D1[Remove from plan]:::theme_exp
+    S1D -- "Active" --> S1D2[Extend to\nhigh-pressure contexts]:::theme_deep
+    S1D -- "Resistant" --> S1D3[Q1 priority]:::error
+    S1D -- "Untouched" --> S1D4[Introduce in Q2]:::theme_recal
+
+    S1 --> S1E{Identity Expression\ndomain status}:::decision
+    S1E -- "Integrated" --> S1E1[Remove from plan]:::theme_exp
+    S1E -- "Active" --> S1E2[Deepen in\nrelational contexts]:::theme_deep
+    S1E -- "Resistant" --> S1E3[Q2 priority]:::error
+    S1E -- "Untouched" --> S1E4[Introduce in Q4]:::theme_recal
+
+    S1A1 & S1A2 & S1A3 & S1A4 --> S2
+    S1B1 & S1B2 & S1B3 & S1B4 --> S2
+    S1C1 & S1C2 & S1C3 & S1C4 --> S2
+    S1D1 & S1D2 & S1D3 & S1D4 --> S2
+    S1E1 & S1E2 & S1E3 & S1E4 --> S2
+
+    %% ─── STEP 2 ─────────────────────────────────────────────────
+    S2[STEP 2 — Shadow Pattern Evolution\nInputs: check-ins, checkpoints,\nyear-end reflection\nScore the shadow pattern:]:::synthesis
+
+    S2 --> S2A{Shadow score}:::decision
+    S2A -- "Unchanged\nPattern fully active" --> S2A1[Year 2 starts at\nQ1 Awareness again\nDifferent entry point]:::theme_recal
+    S2A -- "Aware but Active\nPattern noticed, not interrupted" --> S2A2[Year 2 Q1 focuses\non interruption\nnot just awareness]:::theme_deep
+    S2A -- "Interrupted\nPattern disrupted in safe contexts" --> S2A3[Year 2 extends\ninterruption to harder\ncontexts and relationships]:::theme_ext
+    S2A -- "Integrated\nPattern no longer dominant" --> S2A4[Year 2 targets\nnext shadow layer\nor secondary archetype]:::theme_exp
+
+    S2A1 & S2A2 & S2A3 & S2A4 --> S3
+
+    %% ─── STEP 3 ─────────────────────────────────────────────────
+    S3[STEP 3 — Relational Frontier Identification\nInputs: checkpoints, external validation,\narchetype stability record\nFind the relationship context\nwhere pattern is most defended:]:::synthesis
+
+    S3 --> S3A{External validation\naligns with self-assessment?}:::decision
+    S3A -- "Yes — consistent" --> S3B[Relational frontier =\nhighest-stakes relationship\nnot yet addressed]:::output
+    S3A -- "No — significant gap" --> S3C[Relational frontier =\nspecific relationship\nwhere gap is largest\nYear 2 externalises here]:::output
+
+    S3B & S3C --> S4
+
+    %% ─── STEP 4 ─────────────────────────────────────────────────
+    S4[STEP 4 — Year 2 Theme Selection\nSynthesises all three steps +\nforward commitments +\nyear-end reflection +\narchetype stability]:::synthesis
+
+    S4 --> S4A{Select Year 2 theme}:::decision
+
+    S4A -- "Shadow Integrated\nExternal gap large\nRelational frontier unaddressed" --> THEME_EXT
+
+    S4A -- "Shadow Active or Interrupted\nDomains deepening\nConsistency improving" --> THEME_DEEP
+
+    S4A -- "Shadow Unchanged\nor mid-year archetype revision" --> THEME_RECAL
+
+    S4A -- "Shadow Integrated\nDomains mostly integrated\nRelational frontier addressed" --> THEME_EXP
+
+    %% ─── FOUR THEME OUTCOMES ────────────────────────────────────
+    THEME_EXT[THEME: Externalisation\nYear 2 takes the internal work\ninto the world\nQ1: Relational honesty\nQ2: Professional expression\nQ3: Community contribution\nQ4: Legacy behaviour]:::theme_ext
+
+    THEME_DEEP[THEME: Deepening\nYear 2 takes Year 1 habits\ninto harder contexts\nQ1: High-stakes relationships\nQ2: Professional pressure\nQ3: Identity under stress\nQ4: Sustained commitment]:::theme_deep
+
+    THEME_RECAL[THEME: Recalibration\nYear 2 restarts with new lens\nNew archetype or deeper entry\nQ1: Re-establish baseline\nQ2: New shadow work\nQ3: Integration\nQ4: Expansion]:::theme_recal
+
+    THEME_EXP[THEME: Expansion\nYear 2 opens entirely new domains\nGrowth beyond the original pattern\nQ1: New domain introduction\nQ2: Cross-domain integration\nQ3: Relational expansion\nQ4: Identity consolidation]:::theme_exp
+
+    THEME_EXT & THEME_DEEP & THEME_RECAL & THEME_EXP --> LLM_CALL
+
+    %% ─── LLM CALL ───────────────────────────────────────────────
+    LLM_CALL[LLM invokeLLM call\nStructured JSON prompt:\nAll 6 data inputs summarised\nSynthesis steps 1-4 results\nArchetype + theme selected\nRequest: 7-component Year 2 plan]:::llm
+
+    LLM_CALL --> LLM_OUT{LLM returns\nvalid JSON?}:::decision
+    LLM_OUT -- "No / malformed" --> LLM_RETRY[Retry once with\nstronger JSON schema\ninstruction]:::error
+    LLM_RETRY --> LLM_OUT2{Second attempt\nvalid?}:::decision
+    LLM_OUT2 -- "No" --> LLM_FAIL[500: Year 2 generation failed.\nNotify owner.\nUser shown manual fallback.]:::error
+    LLM_OUT2 -- "Yes" --> OUTPUT_BUILD
+    LLM_OUT -- "Yes" --> OUTPUT_BUILD
+
+    %% ─── SEVEN OUTPUT COMPONENTS ────────────────────────────────
+    OUTPUT_BUILD[Build Year 2 Plan\n7 components assembled:]:::synthesis
+
+    OUTPUT_BUILD --> O1[1. Year 1 Summary\nReferencing specific weeks\nand checkpoint moments\nby name]:::output
+
+    OUTPUT_BUILD --> O2[2. Updated Archetype Profile\nConfirmed or revised canonical\narchetype with nuance notes\nfrom 52 weeks of data]:::output
+
+    OUTPUT_BUILD --> O3[3. Year 2 Theme + Rationale\nTheme name, one-paragraph\nexplanation of why this theme\nwas selected for this person]:::output
+
+    OUTPUT_BUILD --> O4[4. Four Quarter Arc\nQ1-Q4 themes and focus areas\nspecific to this archetype\nand selected Year 2 theme]:::output
+
+    OUTPUT_BUILD --> O5[5. Week 1 of Year 2\nDelivered immediately:\nHabit title + full instruction\nfor the first week]:::output
+
+    OUTPUT_BUILD --> O6[6. Forward Commitment\nOne specific commitment\nthe Twin asks the user\nto name before Year 2 begins]:::output
+
+    OUTPUT_BUILD --> O7[7. Growth Distance Statement\nSecond-person paragraph\nwritten by the Twin:\nWho you were at Week 1\nvs. who you are now]:::output
+
+    O1 & O2 & O3 & O4 & O5 & O6 & O7 --> DB_WRITE
+
+    %% ─── DATABASE WRITES ────────────────────────────────────────
+    DB_WRITE[Supabase writes:]:::supabase
+
+    DB_WRITE --> DB1[INSERT mm_growth_plans:\nplan_year = 2\narchetype = updated_archetype\ntheme = year2_theme\ncurrent_week = 1\ncurrent_quarter = 1\nis_active = true\nplan_data JSON = full output\ncreated_at = now]:::supabase
+
+    DB_WRITE --> DB2[UPDATE mm_growth_plans\nWHERE plan_year = 1:\nis_active = false\ncompleted_at = now]:::supabase
+
+    DB_WRITE --> DB3[UPDATE mm_users:\ncurrent_plan_week = 1\nplan_start_date = now\narchetype_history JSON\nappend Year 1 summary]:::supabase
+
+    DB_WRITE --> DB4[INSERT mm_forward_commitments:\ncommitment_text = O6 value\ncheckpoint_quarter = year2_start\ncreated_at = now]:::supabase
+
+    DB1 & DB2 & DB3 & DB4 --> NOTIFY
+
+    %% ─── NOTIFICATION + DELIVERY ────────────────────────────────
+    NOTIFY[Send Year 2 email via Resend:\nSubject: Your Year 2 Plan is ready\nBody: Growth Distance Statement\n+ Week 1 habit\n+ link to dashboard]:::llm
+
+    NOTIFY --> DASHBOARD[Render Year 2\nGrowth Plan Dashboard:\nNew week badge Week 1 of 52 Year 2\nNew archetype theme applied\nGrowth Distance Statement\ndisplayed above habit card\nWeek 1 habit card\nCheck-in form ready]:::trigger
+
+    %% ─── ARCHETYPE REVISION SUBFLOW ─────────────────────────────
+    subgraph ARCHETYPE_REVISION ["Archetype Revision Path (if Step 4 selects Recalibration)"]
+        direction LR
+        AR1{Updated archetype\nsame as Year 1?} -- "Yes" --> AR2[Deepen same archetype\nwith new entry point]
+        AR1 -- "No — secondary\narchetype dominant" --> AR3[Notify user:\nYour Twin has detected\na shift in your pattern]
+        AR3 --> AR4[Present both archetypes:\nYear 1 archetype\nvs. proposed Year 2 archetype]
+        AR4 --> AR5{User confirms\nnew archetype?}
+        AR5 -- "Yes" --> AR6[Update mm_users\ncanonical_archetype\nLog change in\narchetype_history]
+        AR5 -- "No — keep Year 1" --> AR2
+        AR6 --> AR7[Year 2 plan built\naround new archetype]
+        AR2 --> AR7
+    end
