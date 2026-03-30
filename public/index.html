@@ -1570,8 +1570,10 @@ footer{
         <div class="nav-logo-icon" style="width:28px;height:28px;font-size:14px">🪞</div>
         <span style="font-size:18px">MirrorMind</span>
       </div>
-      <div style="display:flex;gap:12px">
-        <button class="twin-action-btn" onclick="shareReport()">Share Report ↗</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="twin-action-btn" onclick="shareReport()">Share ↗</button>
+        <button class="twin-action-btn" onclick="showScreen('screen-plan');loadGrowthPlan()">My Plan 📅</button>
+        <button class="twin-action-btn" onclick="showScreen('screen-account');loadAccountData()">Account</button>
         <button class="nav-cta" onclick="showScreen('screen-twin')">Talk to Your Twin →</button>
       </div>
     </div>
@@ -1919,8 +1921,35 @@ function getFallbackReport(){
   };
 }
 
+// Gap 10 — Archetype CSS theme map
+const ARCHETYPE_THEMES = {
+  'The Architect':  { accent: '#60a5fa', glow: 'rgba(96,165,250,0.15)',  symbol: '⚙️', gradient: 'linear-gradient(135deg,#1e3a5f,#1a1a2e)' },
+  'The Performer':  { accent: '#f472b6', glow: 'rgba(244,114,182,0.15)', symbol: '✨', gradient: 'linear-gradient(135deg,#4a1942,#1a1a2e)' },
+  'The Protector':  { accent: '#34d399', glow: 'rgba(52,211,153,0.15)',  symbol: '🛡️', gradient: 'linear-gradient(135deg,#064e3b,#1a1a2e)' },
+  'The Seeker':     { accent: '#fbbf24', glow: 'rgba(251,191,36,0.15)',  symbol: '🔍', gradient: 'linear-gradient(135deg,#451a03,#1a1a2e)' },
+  'The Diplomat':   { accent: '#a78bfa', glow: 'rgba(167,139,250,0.15)', symbol: '⚖️', gradient: 'linear-gradient(135deg,#2e1065,#1a1a2e)' },
+  'The Visionary':  { accent: '#fb923c', glow: 'rgba(251,146,60,0.15)',  symbol: '🔭', gradient: 'linear-gradient(135deg,#431407,#1a1a2e)' },
+  'The Anchor':     { accent: '#94a3b8', glow: 'rgba(148,163,184,0.15)', symbol: '⚓', gradient: 'linear-gradient(135deg,#1e293b,#1a1a2e)' },
+  'The Rebel':      { accent: '#f87171', glow: 'rgba(248,113,113,0.15)', symbol: '⚡', gradient: 'linear-gradient(135deg,#450a0a,#1a1a2e)' },
+};
+
+function applyArchetypeTheme(archetype) {
+  const theme = ARCHETYPE_THEMES[archetype];
+  if (!theme) return;
+  const root = document.documentElement;
+  root.style.setProperty('--archetype-accent', theme.accent);
+  root.style.setProperty('--archetype-glow', theme.glow);
+  root.style.setProperty('--archetype-gradient', theme.gradient);
+  // Apply to trait bars, section headers, and insight cards
+  document.querySelectorAll('.trait-fill').forEach(el => el.style.background = theme.accent);
+  document.querySelectorAll('.report-section-icon').forEach(el => el.style.color = theme.accent);
+  document.querySelectorAll('.archetype-name').forEach(el => el.style.color = theme.accent);
+}
+
 function renderReport(data){
   showScreen('screen-report');
+  // Apply archetype-specific visual theme
+  applyArchetypeTheme(data.archetype || data.canonicalArchetype);
   const body = document.getElementById('report-body');
   body.innerHTML = `
     <div class="report-archetype-hero">
@@ -2509,7 +2538,292 @@ async function startVoiceRecordingIntake(btnEl) {
   font-size: 14px;
   padding: 5px 10px;
 }
+
+/* ── GROWTH PLAN DASHBOARD ── */
+.plan-week-badge { display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,0.15);border:1px solid rgba(192,132,252,0.3);border-radius:20px;padding:6px 16px;font-size:14px;color:#a78bfa;margin-bottom:24px; }
+.plan-quarter-bar { display:flex;gap:4px;margin:16px 0; }
+.plan-quarter-segment { flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,0.08); }
+.plan-quarter-segment.active { background:var(--violet); }
+.plan-quarter-segment.done { background:rgba(124,58,237,0.4); }
+.habit-card { background:rgba(124,58,237,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:24px;margin:16px 0; }
+.habit-card h3 { color:#c084fc;font-size:18px;margin:0 0 8px; }
+.habit-card p { color:#cbd5e1;line-height:1.7;margin:0; }
+.checkin-form { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin:24px 0; }
+.checkin-form h3 { color:#e2e8f0;font-size:16px;margin:0 0 16px; }
+.checkin-q { margin-bottom:16px; }
+.checkin-q label { display:block;color:#94a3b8;font-size:13px;margin-bottom:6px; }
+.checkin-q textarea { width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;padding:12px;font-size:14px;resize:vertical;min-height:60px;box-sizing:border-box; }
+.checkin-q textarea:focus { outline:none;border-color:rgba(192,132,252,0.5); }
+.checkpoint-badge { background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(192,132,252,0.1));border:1px solid rgba(192,132,252,0.4);border-radius:12px;padding:20px;margin:16px 0;text-align:center; }
+.checkpoint-badge h3 { color:#c084fc;margin:0 0 8px; }
+.checkpoint-badge p { color:#a78bfa;margin:0;font-size:14px; }
+/* ── ACCOUNT PAGE ── */
+.account-section { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin:16px 0; }
+.account-section h3 { color:#c084fc;font-size:16px;margin:0 0 16px; }
+.account-row { display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05); }
+.account-row:last-child { border-bottom:none; }
+.account-label { color:#94a3b8;font-size:14px; }
+.account-value { color:#e2e8f0;font-size:14px;font-weight:500; }
+.account-tier-badge { display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em; }
+.tier-free { background:rgba(148,163,184,0.15);color:#94a3b8; }
+.tier-core { background:rgba(96,165,250,0.15);color:#60a5fa; }
+.tier-social { background:rgba(167,139,250,0.15);color:#a78bfa; }
+.tier-deep { background:rgba(192,132,252,0.2);color:#c084fc;border:1px solid rgba(192,132,252,0.3); }
+.danger-btn { background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.2s; }
+.danger-btn:hover { background:rgba(239,68,68,0.2); }
 </style>
+
+<!-- GROWTH PLAN DASHBOARD SCREEN -->
+<div id="screen-plan" class="screen">
+  <nav class="nav">
+    <div class="nav-logo" style="cursor:pointer" onclick="showScreen('screen-report')">MirrorMind</div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <button class="nav-cta" onclick="showScreen('screen-twin')">AI Twin</button>
+      <button style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:#94a3b8;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px" onclick="showScreen('screen-account')">Account</button>
+    </div>
+  </nav>
+  <div style="max-width:680px;margin:0 auto;padding:40px 20px">
+    <div id="plan-week-badge" class="plan-week-badge">📅 Week <span id="plan-week-num">1</span> of 52 &nbsp;·&nbsp; Q<span id="plan-quarter-num">1</span>: <span id="plan-quarter-theme">Awareness</span></div>
+    <div class="plan-quarter-bar">
+      <div class="plan-quarter-segment" id="q-seg-1"></div>
+      <div class="plan-quarter-segment" id="q-seg-2"></div>
+      <div class="plan-quarter-segment" id="q-seg-3"></div>
+      <div class="plan-quarter-segment" id="q-seg-4"></div>
+    </div>
+    <div id="plan-checkpoint-notice"></div>
+    <div id="plan-habit-card" class="habit-card">
+      <h3 id="plan-habit-title">Loading your habit...</h3>
+      <p id="plan-habit-instruction">Fetching this week's growth habit for your archetype.</p>
+    </div>
+    <div class="checkin-form" id="checkin-form">
+      <h3>Weekly Check-In</h3>
+      <div class="checkin-q"><label>1. What did you do differently this week?</label><textarea id="ci-q1" placeholder="Even small actions count..."></textarea></div>
+      <div class="checkin-q"><label>2. What did you avoid or resist?</label><textarea id="ci-q2" placeholder="Be honest — avoidance is data..."></textarea></div>
+      <div class="checkin-q"><label>3. What did you notice about yourself?</label><textarea id="ci-q3" placeholder="Patterns, reactions, surprises..."></textarea></div>
+      <button class="cta-btn" style="width:100%;margin-top:8px" onclick="submitCheckin()">Submit Check-In →</button>
+    </div>
+    <div id="checkin-twin-response" style="display:none;background:rgba(124,58,237,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:24px;margin:16px 0">
+      <div style="color:#a78bfa;font-size:13px;margin-bottom:8px">Your Twin responds:</div>
+      <p id="checkin-twin-text" style="color:#e2e8f0;line-height:1.8;margin:0"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNT MANAGEMENT SCREEN -->
+<div id="screen-account" class="screen">
+  <nav class="nav">
+    <div class="nav-logo" style="cursor:pointer" onclick="showScreen('screen-landing')">MirrorMind</div>
+    <button style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:#94a3b8;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px" onclick="showScreen('screen-report')">← Back</button>
+  </nav>
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px">
+    <h2 style="color:#e2e8f0;font-size:24px;margin:0 0 8px">Your Account</h2>
+    <p style="color:#64748b;margin:0 0 32px">Manage your MirrorMind subscription and profile.</p>
+
+    <div class="account-section">
+      <h3>Profile</h3>
+      <div class="account-row"><span class="account-label">Email</span><span class="account-value" id="acct-email">—</span></div>
+      <div class="account-row"><span class="account-label">Archetype</span><span class="account-value" id="acct-archetype">—</span></div>
+      <div class="account-row"><span class="account-label">Plan Week</span><span class="account-value" id="acct-plan-week">—</span></div>
+    </div>
+
+    <div class="account-section">
+      <h3>Subscription</h3>
+      <div class="account-row"><span class="account-label">Current Plan</span><span class="account-value" id="acct-tier"><span class="account-tier-badge tier-free">Free</span></span></div>
+      <div class="account-row"><span class="account-label">Renewal Date</span><span class="account-value" id="acct-renewal">—</span></div>
+      <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
+        <button class="cta-btn" onclick="showScreen('screen-landing');setTimeout(()=>document.getElementById('pricing').scrollIntoView({behavior:'smooth'}),300)">Upgrade Plan</button>
+        <button class="danger-btn" id="cancel-sub-btn" onclick="cancelSubscription()">Cancel Subscription</button>
+      </div>
+    </div>
+
+    <div class="account-section">
+      <h3>Sign In / Link Account</h3>
+      <p style="color:#94a3b8;font-size:14px;margin:0 0 16px">Enter your email to receive a magic link. This links your session to a persistent account so your plan progress is never lost.</p>
+      <div style="display:flex;gap:8px">
+        <input type="email" id="magic-link-email" placeholder="your@email.com" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;padding:12px;font-size:14px" />
+        <button class="cta-btn" onclick="requestMagicLink()">Send Link</button>
+      </div>
+      <p id="magic-link-status" style="color:#a78bfa;font-size:13px;margin:8px 0 0"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Gap 3 — Magic link auth
+async function requestMagicLink() {
+  const email = document.getElementById('magic-link-email').value.trim();
+  if (!email) return;
+  const btn = event.target;
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/auth/magic-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, origin: window.location.origin }),
+    });
+    const data = await res.json();
+    document.getElementById('magic-link-status').textContent = data.success ? '✓ Magic link sent! Check your email.' : data.error;
+  } catch (e) {
+    document.getElementById('magic-link-status').textContent = 'Error sending link. Try again.';
+  }
+  btn.textContent = 'Send Link';
+  btn.disabled = false;
+}
+
+// Handle magic link verification on page load
+(async function checkMagicLinkVerify() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const email = params.get('email');
+  if (!token || !email) return;
+  try {
+    const res = await fetch('/api/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, email }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('mm_session_token', data.sessionToken);
+      localStorage.setItem('mm_user', JSON.stringify(data.user));
+      window.history.replaceState({}, '', window.location.pathname);
+      loadAccountData();
+    }
+  } catch (e) { console.warn('[Auth] Verify failed:', e); }
+})();
+
+async function loadAccountData() {
+  const token = localStorage.getItem('mm_session_token');
+  if (!token) return;
+  try {
+    const res = await fetch('/api/account', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const { user, subscriptionStatus } = await res.json();
+    document.getElementById('acct-email').textContent = user.email || '—';
+    document.getElementById('acct-archetype').textContent = user.canonicalArchetype || window.currentProfile?.archetype || '—';
+    document.getElementById('acct-plan-week').textContent = user.currentPlanWeek ? `Week ${user.currentPlanWeek} of 52` : '—';
+    const tierEl = document.getElementById('acct-tier');
+    const tier = user.tier || 'free';
+    tierEl.innerHTML = `<span class="account-tier-badge tier-${tier}">${tier.charAt(0).toUpperCase() + tier.slice(1)}</span>`;
+    if (subscriptionStatus?.currentPeriodEnd) {
+      document.getElementById('acct-renewal').textContent = new Date(subscriptionStatus.currentPeriodEnd).toLocaleDateString();
+    }
+  } catch (e) { console.warn('[Account] Load failed:', e); }
+}
+
+async function cancelSubscription() {
+  if (!confirm('Are you sure you want to cancel? Your access continues until the end of your billing period.')) return;
+  const token = localStorage.getItem('mm_session_token');
+  if (!token) { alert('Please sign in first.'); return; }
+  const btn = document.getElementById('cancel-sub-btn');
+  btn.textContent = 'Cancelling...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/account/cancel', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    alert(data.message || 'Subscription cancelled.');
+  } catch (e) { alert('Error cancelling. Please email support@mirrormind.ai'); }
+  btn.textContent = 'Cancel Subscription';
+  btn.disabled = false;
+}
+
+// Gap 2 — Growth plan dashboard
+async function loadGrowthPlan() {
+  const sessionId = window.mirrorSessionId;
+  const profile = window.currentProfile;
+  if (!profile) return;
+  const archetype = profile.archetype || profile.canonicalArchetype;
+  const week = parseInt(localStorage.getItem('mm_plan_week') || '1', 10);
+
+  // Update week/quarter display
+  const quarter = week <= 13 ? 1 : week <= 26 ? 2 : week <= 39 ? 3 : 4;
+  const quarterThemes = ['Awareness', 'Disruption', 'Integration', 'Expansion'];
+  document.getElementById('plan-week-num').textContent = week;
+  document.getElementById('plan-quarter-num').textContent = quarter;
+  document.getElementById('plan-quarter-theme').textContent = quarterThemes[quarter - 1];
+
+  // Update quarter progress bar
+  for (let i = 1; i <= 4; i++) {
+    const seg = document.getElementById(`q-seg-${i}`);
+    if (i < quarter) seg.classList.add('done');
+    else if (i === quarter) seg.classList.add('active');
+  }
+
+  // Show checkpoint notice if applicable
+  const checkpointWeeks = [13, 26, 39, 52];
+  if (checkpointWeeks.includes(week)) {
+    document.getElementById('plan-checkpoint-notice').innerHTML = `
+      <div class="checkpoint-badge">
+        <h3>Q${quarter} Integration Checkpoint</h3>
+        <p>This is a checkpoint week. Complete your check-in below, then your AI Twin will synthesise your quarter.</p>
+      </div>`;
+  }
+
+  // Fetch week data from server
+  try {
+    const res = await fetch(`/api/growth-plan/week?archetype=${encodeURIComponent(archetype)}&week=${week}`);
+    const data = await res.json();
+    if (data.summaryContent) {
+      // Extract this archetype's habit from the summary
+      const lines = data.summaryContent.split('\n');
+      const archetypeIdx = lines.findIndex(l => l.includes(archetype));
+      if (archetypeIdx > -1) {
+        const habitLine = lines.slice(archetypeIdx, archetypeIdx + 10).find(l => l.includes('**Habit:**') || l.includes('Habit:'));
+        const instrLine = lines.slice(archetypeIdx, archetypeIdx + 10).find(l => l.includes('**Instruction:**') || l.includes('Instruction:'));
+        if (habitLine) document.getElementById('plan-habit-title').textContent = habitLine.replace(/\*\*/g, '').replace('Habit:', '').trim();
+        if (instrLine) document.getElementById('plan-habit-instruction').textContent = instrLine.replace(/\*\*/g, '').replace('Instruction:', '').trim();
+      }
+    } else {
+      document.getElementById('plan-habit-title').textContent = `Week ${week} — ${quarterThemes[quarter-1]} Phase`;
+      document.getElementById('plan-habit-instruction').textContent = `Your ${archetype} growth habit for this week. Complete your check-in below to record your progress and receive your Twin\'s response.`;
+    }
+  } catch (e) { console.warn('[Plan] Week data fetch failed:', e); }
+}
+
+async function submitCheckin() {
+  const q1 = document.getElementById('ci-q1').value.trim();
+  const q2 = document.getElementById('ci-q2').value.trim();
+  const q3 = document.getElementById('ci-q3').value.trim();
+  if (!q1 && !q2 && !q3) { alert('Please answer at least one question.'); return; }
+
+  const btn = event.target;
+  btn.textContent = 'Submitting...';
+  btn.disabled = true;
+
+  const week = parseInt(localStorage.getItem('mm_plan_week') || '1', 10);
+  const token = localStorage.getItem('mm_session_token');
+
+  try {
+    const res = await fetch('/api/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: window.mirrorSessionId,
+        userId: token ? JSON.parse(localStorage.getItem('mm_user') || '{}').id : null,
+        planWeek: week,
+        q1WhatChanged: q1,
+        q2WhatAvoided: q2,
+        q3WhatNoticed: q3,
+      }),
+    });
+    const data = await res.json();
+    if (data.twinResponse) {
+      document.getElementById('checkin-twin-text').textContent = data.twinResponse;
+      document.getElementById('checkin-twin-response').style.display = 'block';
+      document.getElementById('checkin-form').style.display = 'none';
+      // Advance week counter
+      localStorage.setItem('mm_plan_week', String(week + 1));
+    }
+  } catch (e) { alert('Error submitting check-in. Please try again.'); }
+  btn.textContent = 'Submit Check-In →';
+  btn.disabled = false;
+}
+
+// Load account data on page load if session exists
+if (localStorage.getItem('mm_session_token')) loadAccountData();
+</script>
+
 </body>
 </html>
 
