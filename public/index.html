@@ -2571,6 +2571,37 @@ async function startVoiceRecordingIntake(btnEl) {
 .tier-deep { background:rgba(192,132,252,0.2);color:#c084fc;border:1px solid rgba(192,132,252,0.3); }
 .danger-btn { background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.2s; }
 .danger-btn:hover { background:rgba(239,68,68,0.2); }
+/* ── YEAR 2 PLAN DISPLAY ── */
+.y2-hero { text-align:center;padding:32px 0 24px; }
+.y2-hero h2 { color:#c084fc;font-size:28px;margin:0 0 8px;letter-spacing:-0.02em; }
+.y2-hero .y2-theme-label { display:inline-block;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin:8px 0 0; }
+.y2-theme-externalisation { background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3); }
+.y2-theme-deepening { background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3); }
+.y2-theme-expansion { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3); }
+.y2-theme-recalibration { background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3); }
+.y2-distance { background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(192,132,252,0.06));border:1px solid rgba(192,132,252,0.25);border-radius:16px;padding:28px 24px;margin:24px 0;position:relative; }
+.y2-distance::before { content:'\201C';position:absolute;top:12px;left:16px;font-size:48px;color:rgba(192,132,252,0.25);line-height:1; }
+.y2-distance p { color:#e2e8f0;font-size:16px;line-height:1.8;margin:0;padding-left:24px;font-style:italic; }
+.y2-distance .y2-distance-label { color:#a78bfa;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 12px;font-style:normal;padding-left:24px; }
+.y2-profile { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin:16px 0; }
+.y2-profile h3 { color:#c084fc;font-size:16px;margin:0 0 8px; }
+.y2-profile p { color:#cbd5e1;font-size:14px;line-height:1.7;margin:0; }
+.y2-quarters { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0; }
+.y2-q-card { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px; }
+.y2-q-card .q-num { color:#a78bfa;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px; }
+.y2-q-card .q-title { color:#e2e8f0;font-size:15px;font-weight:600;margin:0; }
+.y2-week1 { background:rgba(124,58,237,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:24px;margin:20px 0; }
+.y2-week1 h3 { color:#c084fc;font-size:16px;margin:0 0 6px; }
+.y2-week1 p { color:#cbd5e1;font-size:14px;line-height:1.7;margin:0; }
+.y2-commitment { background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);border-radius:12px;padding:24px;margin:20px 0;text-align:center; }
+.y2-commitment .commit-label { color:#fbbf24;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px; }
+.y2-commitment p { color:#e2e8f0;font-size:16px;font-weight:500;margin:0;font-style:italic; }
+.y2-rationale { color:#94a3b8;font-size:13px;line-height:1.6;margin:12px 0 0;text-align:center; }
+.y2-generate-cta { text-align:center;margin:32px 0; }
+.y2-locked { text-align:center;padding:40px 20px; }
+.y2-locked h3 { color:#94a3b8;font-size:18px;margin:0 0 8px; }
+.y2-locked p { color:#64748b;font-size:14px;margin:0 0 20px; }
+@media (max-width:600px) { .y2-quarters { grid-template-columns:1fr; } }
 </style>
 
 <!-- GROWTH PLAN DASHBOARD SCREEN -->
@@ -2579,6 +2610,7 @@ async function startVoiceRecordingIntake(btnEl) {
     <div class="nav-logo" style="cursor:pointer" onclick="showScreen('screen-report')">MirrorMind</div>
     <div style="display:flex;gap:12px;align-items:center">
       <button class="nav-cta" onclick="showScreen('screen-twin')">AI Twin</button>
+      <button style="background:transparent;border:1px solid rgba(192,132,252,0.3);color:#c084fc;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px" onclick="showScreen('screen-year2');loadYear2Plan()">Year 2 ✨</button>
       <button style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:#94a3b8;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px" onclick="showScreen('screen-account')">Account</button>
     </div>
   </nav>
@@ -2605,6 +2637,13 @@ async function startVoiceRecordingIntake(btnEl) {
     <div id="checkin-twin-response" style="display:none;background:rgba(124,58,237,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:24px;margin:16px 0">
       <div style="color:#a78bfa;font-size:13px;margin-bottom:8px">Your Twin responds:</div>
       <p id="checkin-twin-text" style="color:#e2e8f0;line-height:1.8;margin:0"></p>
+    </div>
+    <!-- Year 2 teaser (shown at week 48+) -->
+    <div id="y2-teaser" style="display:none;background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(192,132,252,0.04));border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:24px;margin:24px 0;text-align:center">
+      <div style="font-size:24px;margin-bottom:8px">✨</div>
+      <h4 style="color:#c084fc;font-size:16px;margin:0 0 8px">Year 2 is approaching</h4>
+      <p style="color:#94a3b8;font-size:14px;margin:0 0 16px">You are in the final stretch. At Week 52, your Twin will synthesise a full year of data into a personalised Year 2 Plan.</p>
+      <button class="cta-btn" style="padding:10px 24px;font-size:14px" onclick="showScreen('screen-year2');loadYear2Plan()">Preview Year 2 →</button>
     </div>
   </div>
 </div>
@@ -2647,9 +2686,87 @@ async function startVoiceRecordingIntake(btnEl) {
     </div>
   </div>
 </div>
-
+<!-- YEAR 2 PLAN DISPLAY SCREEN -->
+<div id="screen-year2" class="screen">
+  <nav class="nav">
+    <div class="nav-logo" style="cursor:pointer" onclick="showScreen('screen-report')">MirrorMind</div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <button class="nav-cta" onclick="showScreen('screen-plan');loadGrowthPlan()">My Plan</button>
+      <button style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:#94a3b8;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px" onclick="showScreen('screen-account')">Account</button>
+    </div>
+  </nav>
+  <div style="max-width:680px;margin:0 auto;padding:40px 20px">
+    <!-- Loading state -->
+    <div id="y2-loading" style="text-align:center;padding:60px 0">
+      <div style="font-size:32px;margin-bottom:16px">&#x2728;</div>
+      <p style="color:#a78bfa;font-size:16px">Generating your Year 2 Plan...</p>
+      <p style="color:#64748b;font-size:13px;margin-top:8px">Your Twin is synthesising 52 weeks of data. This may take 15–20 seconds.</p>
+    </div>
+    <!-- Year 2 content (hidden until loaded) -->
+    <div id="y2-content" style="display:none">
+      <!-- Hero -->
+      <div class="y2-hero">
+        <div style="font-size:36px;margin-bottom:12px">&#x1F31F;</div>
+        <h2>Year 2: <span id="y2-archetype-name">Your Archetype</span></h2>
+        <div id="y2-theme-badge" class="y2-theme-label y2-theme-deepening">Deepening</div>
+      </div>
+      <!-- Growth Distance Statement -->
+      <div class="y2-distance">
+        <div class="y2-distance-label">Growth Distance Statement</div>
+        <p id="y2-distance-text">Loading...</p>
+      </div>
+      <!-- Theme Rationale -->
+      <p id="y2-rationale" class="y2-rationale"></p>
+      <!-- Updated Archetype Profile -->
+      <div class="y2-profile">
+        <h3>Updated Archetype Profile</h3>
+        <p id="y2-profile-text">Loading...</p>
+      </div>
+      <!-- Four Quarter Arc -->
+      <h3 style="color:#e2e8f0;font-size:16px;margin:24px 0 12px">Your Year 2 Arc</h3>
+      <div class="y2-quarters">
+        <div class="y2-q-card"><div class="q-num">Quarter 1</div><div class="q-title" id="y2-q1">Loading...</div></div>
+        <div class="y2-q-card"><div class="q-num">Quarter 2</div><div class="q-title" id="y2-q2">Loading...</div></div>
+        <div class="y2-q-card"><div class="q-num">Quarter 3</div><div class="q-title" id="y2-q3">Loading...</div></div>
+        <div class="y2-q-card"><div class="q-num">Quarter 4</div><div class="q-title" id="y2-q4">Loading...</div></div>
+      </div>
+      <!-- Week 1 Habit -->
+      <div class="y2-week1">
+        <h3 id="y2-week1-title">Week 1</h3>
+        <p id="y2-week1-instruction">Loading...</p>
+      </div>
+      <!-- Forward Commitment -->
+      <div class="y2-commitment">
+        <div class="commit-label">Your Year 2 Commitment</div>
+        <p id="y2-commitment-text">Loading...</p>
+      </div>
+      <!-- Begin Year 2 CTA -->
+      <div class="y2-generate-cta">
+        <button class="cta-btn" style="padding:14px 32px;font-size:16px" onclick="beginYear2()">Begin Year 2 &#x2192;</button>
+      </div>
+    </div>
+    <!-- Locked state for non-Deep users -->
+    <div id="y2-locked" style="display:none">
+      <div class="y2-locked">
+        <div style="font-size:48px;margin-bottom:16px">&#x1F512;</div>
+        <h3>Year 2 Plan</h3>
+        <p>The Year 2 Plan is generated from 52 weeks of check-in data and 4 quarterly checkpoints. It is exclusively available to Deep tier members who have completed Year 1.</p>
+        <button class="cta-btn" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'});showScreen('screen-landing')">Upgrade to Deep &#x2192;</button>
+      </div>
+    </div>
+    <!-- Not ready state (Year 1 not complete) -->
+    <div id="y2-not-ready" style="display:none">
+      <div class="y2-locked">
+        <div style="font-size:48px;margin-bottom:16px">&#x23F3;</div>
+        <h3>Year 2 Plan — Not Yet Available</h3>
+        <p id="y2-not-ready-text">Complete your Year 1 journey to unlock your personalised Year 2 Plan. Your Twin needs 52 weeks of data to build what comes next.</p>
+        <button class="cta-btn" onclick="showScreen('screen-plan');loadGrowthPlan()">Back to My Plan &#x2192;</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
-// Gap 3 — Magic link auth
+// Gap 3 — Magic link authh
 async function requestMagicLink() {
   const email = document.getElementById('magic-link-email').value.trim();
   if (!email) return;
@@ -2779,6 +2896,28 @@ async function loadGrowthPlan() {
       document.getElementById('plan-habit-instruction').textContent = `Your ${archetype} growth habit for this week. Complete your check-in below to record your progress and receive your Twin\'s response.`;
     }
   } catch (e) { console.warn('[Plan] Week data fetch failed:', e); }
+
+  // Show Year 2 teaser for weeks 48+
+  const y2Teaser = document.getElementById('y2-teaser');
+  if (y2Teaser) {
+    if (week >= 48) {
+      y2Teaser.style.display = 'block';
+    } else {
+      y2Teaser.style.display = 'none';
+    }
+  }
+
+  // At week 52 for Deep users, show Year 2 CTA prominently
+  const tier = profile?.tier || localStorage.getItem('mm_tier') || 'free';
+  if (week >= 52 && tier === 'deep') {
+    const notice = document.getElementById('plan-checkpoint-notice');
+    notice.innerHTML = `
+      <div class="checkpoint-badge" style="background:linear-gradient(135deg,rgba(192,132,252,0.2),rgba(124,58,237,0.1));border-color:rgba(192,132,252,0.5)">
+        <h3 style="font-size:20px">\u2728 Year 1 Complete</h3>
+        <p>Congratulations. Your Twin has 52 weeks of data. Your Year 2 Plan is ready to be generated.</p>
+        <button class="cta-btn" style="margin-top:16px;padding:12px 28px" onclick="showScreen('screen-year2');loadYear2Plan()">Generate Year 2 Plan \u2192</button>
+      </div>`;
+  }
 }
 
 async function submitCheckin() {
@@ -2818,6 +2957,102 @@ async function submitCheckin() {
   } catch (e) { alert('Error submitting check-in. Please try again.'); }
   btn.textContent = 'Submit Check-In →';
   btn.disabled = false;
+}
+
+// ── YEAR 2 PLAN FUNCTIONS ──
+async function loadYear2Plan() {
+  const profile = window.currentProfile;
+  const sessionId = window.mirrorSessionId;
+  const tier = profile?.tier || localStorage.getItem('mm_tier') || 'free';
+  const planWeek = parseInt(localStorage.getItem('mm_plan_week') || '1', 10);
+  // Hide all states first
+  document.getElementById('y2-loading').style.display = 'none';
+  document.getElementById('y2-content').style.display = 'none';
+  document.getElementById('y2-locked').style.display = 'none';
+  document.getElementById('y2-not-ready').style.display = 'none';
+  // Check tier
+  if (tier !== 'deep') {
+    document.getElementById('y2-locked').style.display = 'block';
+    return;
+  }
+  // Check if Year 1 is complete (week >= 52)
+  if (planWeek < 52) {
+    const weeksLeft = 52 - planWeek;
+    document.getElementById('y2-not-ready-text').textContent = `You are on Week ${planWeek} of 52. Complete ${weeksLeft} more week${weeksLeft > 1 ? 's' : ''} to unlock your personalised Year 2 Plan. Your Twin needs the full year of data to build what comes next.`;
+    document.getElementById('y2-not-ready').style.display = 'block';
+    return;
+  }
+  // Check if Year 2 plan already exists in localStorage
+  const cached = localStorage.getItem('mm_year2_plan');
+  if (cached) {
+    try {
+      renderYear2Plan(JSON.parse(cached));
+      return;
+    } catch (e) { localStorage.removeItem('mm_year2_plan'); }
+  }
+  // Show loading and generate
+  document.getElementById('y2-loading').style.display = 'block';
+  try {
+    const userId = JSON.parse(localStorage.getItem('mm_user') || '{}').id || null;
+    const res = await fetch('/api/year2-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, sessionId }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById('y2-loading').style.display = 'none';
+      document.getElementById('y2-not-ready').style.display = 'block';
+      document.getElementById('y2-not-ready-text').textContent = data.error || 'Unable to generate Year 2 Plan. Please try again.';
+      return;
+    }
+    localStorage.setItem('mm_year2_plan', JSON.stringify(data.year2Plan));
+    renderYear2Plan(data.year2Plan);
+  } catch (err) {
+    console.error('[Year2] Error:', err);
+    document.getElementById('y2-loading').style.display = 'none';
+    document.getElementById('y2-not-ready').style.display = 'block';
+    document.getElementById('y2-not-ready-text').textContent = 'Something went wrong generating your Year 2 Plan. Please try again later.';
+  }
+}
+
+function renderYear2Plan(plan) {
+  document.getElementById('y2-loading').style.display = 'none';
+  document.getElementById('y2-content').style.display = 'block';
+  // Archetype name
+  const archetype = window.currentProfile?.archetype || window.currentProfile?.canonicalArchetype || 'Your Archetype';
+  document.getElementById('y2-archetype-name').textContent = archetype;
+  // Theme badge
+  const theme = (plan.year2Theme || 'Deepening').toLowerCase();
+  const badge = document.getElementById('y2-theme-badge');
+  badge.textContent = plan.year2Theme || 'Deepening';
+  badge.className = 'y2-theme-label y2-theme-' + theme;
+  // Growth Distance Statement
+  document.getElementById('y2-distance-text').textContent = plan.growthDistanceStatement || '';
+  // Theme rationale
+  document.getElementById('y2-rationale').textContent = plan.year2ThemeRationale || '';
+  // Updated archetype profile
+  document.getElementById('y2-profile-text').textContent = plan.updatedArchetypeProfile || '';
+  // Quarter themes
+  document.getElementById('y2-q1').textContent = plan.q1Theme || 'Q1';
+  document.getElementById('y2-q2').textContent = plan.q2Theme || 'Q2';
+  document.getElementById('y2-q3').textContent = plan.q3Theme || 'Q3';
+  document.getElementById('y2-q4').textContent = plan.q4Theme || 'Q4';
+  // Week 1 habit
+  if (plan.week1Habit) {
+    document.getElementById('y2-week1-title').textContent = plan.week1Habit.title || 'Week 1';
+    document.getElementById('y2-week1-instruction').textContent = plan.week1Habit.instruction || '';
+  }
+  // Forward commitment
+  document.getElementById('y2-commitment-text').textContent = plan.forwardCommitment || '';
+}
+
+function beginYear2() {
+  // Reset plan week to 1 for Year 2
+  localStorage.setItem('mm_plan_week', '1');
+  localStorage.setItem('mm_plan_year', '2');
+  showScreen('screen-plan');
+  loadGrowthPlan();
 }
 
 // Load account data on page load if session exists
