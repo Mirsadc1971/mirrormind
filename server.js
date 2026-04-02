@@ -8,7 +8,60 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import multer from 'multer';
+// ===== MIRRORMIND QUESTIONS (TEMP TEST) =====
+const questions = [
+  {
+    id: 1,
+    answers: {
+      A: { archetypes: { Sage: 2, Ruler: 1 } },
+      B: { archetypes: { Hero: 2, Explorer: 1 } },
+      C: { archetypes: { Everyman: 2, Caregiver: 1 } },
+      D: { archetypes: { Orphan: 2, Innocent: 1 } }
+    }
+  },
+  {
+    id: 2,
+    answers: {
+      A: { archetypes: { Hero: 2, Ruler: 1 } },
+      B: { archetypes: { Caregiver: 2, Lover: 1 } },
+      C: { archetypes: { Sage: 2, Orphan: 1 } },
+      D: { archetypes: { Innocent: 2, Everyman: 1 } }
+    }
+  }
+];
 
+// ===== SCORING FUNCTION =====
+function calculateResults(answers) {
+  const scores = {};
+
+  const archetypes = [
+    "Innocent","Everyman","Hero","Caregiver",
+    "Explorer","Rebel","Lover","Creator",
+    "Jester","Sage","Magician","Ruler","Orphan"
+  ];
+
+  archetypes.forEach(a => scores[a] = 0);
+
+  answers.forEach(a => {
+    const q = questions.find(q => q.id === a.question_id);
+    if (!q) return;
+
+    const selected = q.answers[a.value];
+    if (!selected) return;
+
+    Object.entries(selected.archetypes).forEach(([type, val]) => {
+      scores[type] += val;
+    });
+  });
+
+  const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+
+  return {
+    primary: sorted[0],
+    secondary: sorted[1],
+    all: sorted
+  };
+}
 // ─── Supabase client (MirrorMind project) ────────────────────────────────────
 const SUPABASE_URL = 'https://mlsuttoccqcpjhvkfeuv.supabase.co';
 const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sc3V0dG9jY3FjcGpodmtmZXV2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDgxODc5OSwiZXhwIjoyMDkwMzk0Nzk5fQ.qb62UnhsqkPwJE3KiuxZFdLNWZWO9FTiJohKLsOjNwk';
